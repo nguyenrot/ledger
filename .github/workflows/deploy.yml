@@ -21,7 +21,9 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - run: npm ci
+      # Nuxt 4 / Tailwind v4 ecosystem has a transient peer-vs-dep conflict on
+      # `commander` (13 vs 11) that npm ci rejects but npm install reconciles.
+      - run: npm install --no-audit --no-fund
 
       - name: Build
         run: npm run build
