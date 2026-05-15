@@ -1,0 +1,80 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ledger
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+          NUXT_PUBLIC_API_BASE: https://api.kynguyen.cc
+
+      - name: Package Nitro standalone bundle
+        run: |
+          mkdir -p deploy/.output
+          cp -r .output/. deploy/.output/
+          cp deploy.sh deploy/deploy.sh
+          tar czf ledger-deploy.tar.gz -C deploy .
+          ls -lh ledger-deploy.tar.gz
+
+      - name: SCP to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: ledger-deploy.tar.gz
+          target: /tmp/
+
+      - name: Extract + restart on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            APP_DIR=/var/www/ledger
+            BACKUP_DIR=/var/www/ledger.bak
+            PM2_NAME=ledger-pkn
+            PORT=3005
+
+            mkdir -p "$APP_DIR"
+            cd "$APP_DIR"
+
+            rm -rf "$BACKUP_DIR"
+            mkdir -p "$BACKUP_DIR"
+            find "$APP_DIR" -mindepth 1 -maxdepth 1 ! -name '.env*' -exec mv {} "$BACKUP_DIR/" \;
+
+            tar xzf /tmp/ledger-deploy.tar.gz -C "$APP_DIR"
+            rm /tmp/ledger-deploy.tar.gz
+
+            pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
+            cd "$APP_DIR"
+            PORT="$PORT" pm2 start .output/server/index.mjs --name "$PM2_NAME" --update-env
+            pm2 save --force >/dev/null
+
+            sleep 3
+            pm2 describe "$PM2_NAME" | grep -E 'status|restart_time' | head -3
+            curl -fsSL "http://127.0.0.1:$PORT/" -o /dev/null -w 'local HTTP %{http_code}\n'
+            curl -fsSL https://ledger.kynguyen.cc/ -o /dev/null -w 'public HTTP %{http_code}\n'

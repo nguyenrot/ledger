@@ -1,0 +1,182 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #020208;
+  --color-bg-elevated: #0a0a14;
+  --color-bg-card: #0f0f1c;
+  --color-border: #1a1a2e;
+  --color-border-glow: #00f5ff;
+
+  --color-cyan: #00f5ff;
+  --color-cyan-dim: #00b8c4;
+  --color-magenta: #ff00aa;
+  --color-violet: #aa00ff;
+  --color-emerald: #00ff88;
+  --color-gold: #f0b429;
+  --color-rose: #ff4f6b;
+
+  --color-fg: #e5e7eb;
+  --color-fg-muted: #94a3b8;
+  --color-fg-dim: #64748b;
+
+  --font-display: 'Chakra Petch', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html, body, #__nuxt {
+  background: var(--color-bg);
+  min-height: 100%;
+}
+
+body {
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  font-feature-settings: 'ss01';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+.font-mono, code, kbd, samp, pre {
+  font-family: var(--font-mono);
+}
+
+/* ── Cyberpunk visual primitives ───────────────────────────────────── */
+
+.card {
+  background: linear-gradient(180deg, rgba(15, 15, 28, 0.95) 0%, rgba(10, 10, 20, 0.92) 100%);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  position: relative;
+}
+
+.card-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.5), rgba(170, 0, 255, 0.25) 60%, transparent 80%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.18), rgba(170, 0, 255, 0.18));
+  border: 1px solid var(--color-cyan);
+  color: var(--color-cyan);
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 180ms ease;
+  box-shadow: 0 0 0 0 rgba(0, 245, 255, 0);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.32), rgba(170, 0, 255, 0.32));
+  box-shadow: 0 0 24px -4px rgba(0, 245, 255, 0.6);
+}
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-ghost {
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-muted);
+  background: transparent;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 180ms ease;
+}
+.btn-ghost:hover {
+  border-color: var(--color-cyan-dim);
+  color: var(--color-cyan);
+}
+
+.input-field {
+  background: rgba(2, 2, 8, 0.6);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 0 1px var(--color-cyan), 0 0 18px -8px rgba(0, 245, 255, 0.8);
+}
+.input-field::placeholder { color: var(--color-fg-dim); }
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-fg-dim);
+}
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.kind-income { color: var(--color-emerald); }
+.kind-expense { color: var(--color-rose); }
+.kind-net-pos { color: var(--color-emerald); }
+.kind-net-neg { color: var(--color-rose); }
+
+/* ── Ambient animations ───────────────────────────────────────────── */
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+.scanline {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 245, 255, 0.08) 50%, transparent 100%);
+  animation: scanline 7.5s linear infinite;
+}
+
+@keyframes grid-shift {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+.cyber-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.9) 0%, transparent 70%);
+  animation: grid-shift 24s linear infinite;
+}
+
+@keyframes pulse-rune {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.pulse-rune { animation: pulse-rune 3s ease-in-out infinite; }
