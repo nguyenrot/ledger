@@ -55,9 +55,11 @@ export interface Summary {
 
 export interface CreateAccountResponse {
   id: string
-  token: string
   created_at: string
 }
+
+export const TOKEN_PATTERN = /^[A-Za-z0-9]{10}$/
+export const TOKEN_LENGTH = 10
 
 export interface AccountInfo {
   id: string
@@ -108,8 +110,11 @@ export const useLedgerApi = () => {
   }
 
   return {
-    createAccount: () =>
-      apiFetch<CreateAccountResponse>('/api/v1/ledger/accounts', { method: 'POST', body: '{}' }),
+    createAccount: (token: string) =>
+      apiFetch<CreateAccountResponse>('/api/v1/ledger/accounts', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      }),
     me: () => apiFetch<AccountInfo>('/api/v1/ledger/me'),
     categories: () => apiFetch<LedgerCategory[]>('/api/v1/ledger/categories'),
 

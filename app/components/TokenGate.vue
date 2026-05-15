@@ -1,72 +1,72 @@
 <script setup lang="ts">
-import { useLedgerApi, ApiError } from '~/composables/useLedgerApi'
+import { ApiError, TOKEN_LENGTH, TOKEN_PATTERN, useLedgerApi } from '~/composables/useLedgerApi'
 import { useToken } from '~/composables/useToken'
 
-type Mode = 'choose' | 'paste' | 'created'
+type Mode = 'choose' | 'create' | 'login'
 
 const api = useLedgerApi()
 const { setToken } = useToken()
 
 const mode = ref<Mode>('choose')
-const pastedToken = ref('')
+const input = ref('')
 const error = ref('')
 const busy = ref(false)
-const newAccount = ref<{ id: string; token: string } | null>(null)
-const copied = ref(false)
+
+function reset() {
+  input.value = ''
+  error.value = ''
+}
+
+function go(next: Mode) {
+  mode.value = next
+  reset()
+}
+
+const isValid = computed(() => TOKEN_PATTERN.test(input.value))
+const remaining = computed(() => Math.max(0, TOKEN_LENGTH - input.value.length))
 
 async function handleCreate() {
   error.value = ''
-  busy.value = true
-  try {
-    const res = await api.createAccount()
-    newAccount.value = { id: res.id, token: res.token }
-    mode.value = 'created'
-  } catch (e) {
-    error.value = (e as Error).message || 'Không tạo được account.'
-  } finally {
-    busy.value = false
-  }
-}
-
-async function handlePaste() {
-  error.value = ''
-  const candidate = pastedToken.value.trim()
-  if (!candidate) {
-    error.value = 'Hãy dán token trước khi tiếp tục.'
+  if (!isValid.value) {
+    error.value = `Token phải đúng ${TOKEN_LENGTH} ký tự, chỉ chữ và số.`
     return
   }
   busy.value = true
   try {
-    // Temporarily set token, then verify via /me — clearToken happens automatically on 401.
-    setToken(candidate)
-    await api.me()
-    // Token verified — useToken state is already set.
+    await api.createAccount(input.value)
+    setToken(input.value)
   } catch (e) {
-    setToken(null)
-    if (e instanceof ApiError && e.status === 401) {
-      error.value = 'Token không hợp lệ.'
+    if (e instanceof ApiError && e.status === 409) {
+      error.value = 'Token này đã có người dùng. Hãy chọn token khác.'
+    } else if (e instanceof ApiError && e.status === 400) {
+      error.value = (e as Error).message
     } else {
-      error.value = (e as Error).message || 'Không xác thực được token.'
+      error.value = (e as Error).message || 'Không tạo được account.'
     }
   } finally {
     busy.value = false
   }
 }
 
-async function confirmCreated() {
-  if (!newAccount.value) return
-  setToken(newAccount.value.token)
-  // Pages will render automatically once token is set.
-}
-
-async function copyToken() {
-  if (!newAccount.value) return
+async function handleLogin() {
+  error.value = ''
+  if (!isValid.value) {
+    error.value = `Token phải đúng ${TOKEN_LENGTH} ký tự, chỉ chữ và số.`
+    return
+  }
+  busy.value = true
   try {
-    await navigator.clipboard.writeText(newAccount.value.token)
-    copied.value = true
-    setTimeout(() => (copied.value = false), 1800)
-  } catch {
-    // Ignore — user can still copy manually.
+    setToken(input.value)
+    await api.me()
+  } catch (e) {
+    setToken(null)
+    if (e instanceof ApiError && e.status === 401) {
+      error.value = 'Token không tồn tại. Anh nhập lại hoặc chuyển sang “Tạo account”.'
+    } else {
+      error.value = (e as Error).message || 'Không xác thực được token.'
+    }
+  } finally {
+    busy.value = false
   }
 }
 </script>
@@ -84,69 +84,90 @@ async function copyToken() {
         <span class="text-[var(--color-fg-muted)]">.kynguyen.cc</span>
       </h1>
       <p class="text-sm text-[var(--color-fg-muted)] mb-8">
-        Một token duy nhất là toàn bộ tài khoản của anh. Mất token là mất dữ liệu — không có cách reset.
+        Một token {{ TOKEN_LENGTH }} ký tự (chữ + số) là toàn bộ tài khoản. Tự đặt, tự nhớ — mất là mất, không reset được.
       </p>
 
       <!-- choose -->
       <div v-if="mode === 'choose'" class="space-y-3">
-        <button class="btn-primary w-full py-3 px-5 rounded-lg" :disabled="busy" @click="handleCreate">
-          {{ busy ? 'Đang khởi tạo…' : '⊕ Tạo account mới' }}
+        <button class="btn-primary w-full py-3 px-5 rounded-lg" @click="go('create')">
+          ⊕ Tạo account mới
         </button>
-        <button class="btn-ghost w-full py-3 px-5 rounded-lg" :disabled="busy" @click="mode = 'paste'">
+        <button class="btn-ghost w-full py-3 px-5 rounded-lg" @click="go('login')">
           ⋯ Đã có token, đăng nhập
         </button>
       </div>
 
-      <!-- paste existing -->
-      <div v-else-if="mode === 'paste'" class="space-y-4">
-        <label class="block">
-          <span class="label block mb-2">Dán token</span>
+      <!-- create new -->
+      <div v-else-if="mode === 'create'" class="space-y-4">
+        <div>
+          <span class="label block mb-2">Chọn token mới · {{ TOKEN_LENGTH }} ký tự</span>
           <input
-            v-model="pastedToken"
+            v-model="input"
             type="text"
             spellcheck="false"
             autocomplete="off"
-            class="input-field w-full px-4 py-3 rounded-lg text-sm"
-            placeholder="Token URL-safe, dài ~43 ký tự"
-            @keyup.enter="handlePaste"
+            autocapitalize="off"
+            :maxlength="TOKEN_LENGTH"
+            class="input-field w-full px-4 py-3 rounded-lg text-lg font-display tracking-[0.25em]"
+            placeholder="VD: NguyenA123"
+            @keyup.enter="handleCreate"
           />
-        </label>
+          <p class="mt-1.5 text-[10px] font-mono uppercase tracking-wider"
+             :class="isValid ? 'text-[var(--color-emerald)]' : 'text-[var(--color-fg-dim)]'">
+            {{ isValid ? '✓ hợp lệ' : remaining > 0 ? `còn ${remaining} ký tự` : 'chỉ dùng A–Z, a–z, 0–9' }}
+          </p>
+        </div>
+
+        <div class="border border-[var(--color-gold)] rounded-lg p-3 bg-[rgba(240,180,41,0.07)]">
+          <p class="text-[11px] text-[var(--color-gold)] font-mono tracking-wider mb-1">⚠ KHÔNG RESET ĐƯỢC</p>
+          <p class="text-xs text-[var(--color-fg-muted)]">
+            Server chỉ lưu hash SHA-256, không lưu raw token. Hãy ghi vào nơi an toàn (1Password, Bitwarden, sổ tay).
+          </p>
+        </div>
+
         <p v-if="error" class="text-xs text-[var(--color-rose)] font-mono">{{ error }}</p>
+
         <div class="flex gap-3">
-          <button class="btn-ghost flex-1 py-2.5 px-4 rounded-lg text-sm" :disabled="busy" @click="mode = 'choose'; error = ''">
+          <button class="btn-ghost flex-1 py-2.5 px-4 rounded-lg text-sm" :disabled="busy" @click="go('choose')">
             ← Quay lại
           </button>
-          <button class="btn-primary flex-1 py-2.5 px-4 rounded-lg text-sm" :disabled="busy" @click="handlePaste">
+          <button class="btn-primary flex-1 py-2.5 px-4 rounded-lg text-sm" :disabled="busy || !isValid" @click="handleCreate">
+            {{ busy ? 'Đang tạo…' : 'Tạo · vào app →' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- login existing -->
+      <div v-else-if="mode === 'login'" class="space-y-4">
+        <div>
+          <span class="label block mb-2">Nhập token · {{ TOKEN_LENGTH }} ký tự</span>
+          <input
+            v-model="input"
+            type="text"
+            spellcheck="false"
+            autocomplete="off"
+            autocapitalize="off"
+            :maxlength="TOKEN_LENGTH"
+            class="input-field w-full px-4 py-3 rounded-lg text-lg font-display tracking-[0.25em]"
+            placeholder="Token đã có"
+            @keyup.enter="handleLogin"
+          />
+          <p class="mt-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--color-fg-dim)]">
+            {{ remaining > 0 ? `còn ${remaining} ký tự` : 'sẵn sàng' }}
+          </p>
+        </div>
+
+        <p v-if="error" class="text-xs text-[var(--color-rose)] font-mono">{{ error }}</p>
+
+        <div class="flex gap-3">
+          <button class="btn-ghost flex-1 py-2.5 px-4 rounded-lg text-sm" :disabled="busy" @click="go('choose')">
+            ← Quay lại
+          </button>
+          <button class="btn-primary flex-1 py-2.5 px-4 rounded-lg text-sm" :disabled="busy || !isValid" @click="handleLogin">
             {{ busy ? 'Đang xác thực…' : 'Vào app →' }}
           </button>
         </div>
       </div>
-
-      <!-- newly created -->
-      <div v-else-if="mode === 'created' && newAccount" class="space-y-4">
-        <div class="border border-[var(--color-gold)] rounded-lg p-4 bg-[rgba(240,180,41,0.08)]">
-          <p class="text-xs text-[var(--color-gold)] font-mono tracking-wider mb-1">⚠ HIỂN THỊ MỘT LẦN</p>
-          <p class="text-xs text-[var(--color-fg-muted)]">
-            Token này chỉ xuất hiện ngay bây giờ. Hãy lưu vào nơi an toàn (1Password, Bitwarden, Apple Keychain…). Server chỉ giữ hash SHA-256.
-          </p>
-        </div>
-
-        <div>
-          <span class="label block mb-2">Token</span>
-          <div class="flex items-stretch gap-2">
-            <code class="flex-1 input-field px-4 py-3 rounded-lg text-xs break-all select-all">{{ newAccount.token }}</code>
-            <button class="btn-ghost px-4 rounded-lg text-xs" @click="copyToken">
-              {{ copied ? '✓' : 'Copy' }}
-            </button>
-          </div>
-        </div>
-
-        <button class="btn-primary w-full py-3 px-5 rounded-lg" @click="confirmCreated">
-          Đã lưu, vào app →
-        </button>
-      </div>
-
-      <p v-if="error && mode === 'choose'" class="mt-4 text-xs text-[var(--color-rose)] font-mono">{{ error }}</p>
     </div>
   </main>
 </template>
