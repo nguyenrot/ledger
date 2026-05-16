@@ -1,4 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#14b8a6"/>
-  <text x="256" y="386" text-anchor="middle" font-family="-apple-system, system-ui, 'Segoe UI', sans-serif" font-weight="800" font-size="360" fill="#062b2a">₫</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a2e2c"/>
+      <stop offset="1" stop-color="#031818"/>
+    </linearGradient>
+    <linearGradient id="stroke" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5ffaff"/>
+      <stop offset="1" stop-color="#00d4d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="118" r="30" fill="#f0b429"/>
+  <rect x="244" y="148" width="24" height="276" rx="12" fill="url(#stroke)"/>
+  <rect x="116" y="216" width="208" height="20" rx="10" fill="#f0b429"/>
+  <rect x="116" y="320" width="296" height="20" rx="10" fill="#f0b429" opacity="0.72"/>
 </svg>
