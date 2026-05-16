@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { CATEGORY_COLORS, CATEGORY_LABELS, useFormat } from '~/composables/useFormat'
+import { useFormat } from '~/composables/useFormat'
+import { useCategories } from '~/composables/useCategories'
 import type { SummaryCategoryRow } from '~/composables/useLedgerApi'
 
 const props = defineProps<{
@@ -7,6 +8,9 @@ const props = defineProps<{
   title: string
   kind: 'income' | 'expense'
 }>()
+
+const cats = useCategories()
+onMounted(cats.ensureLoaded)
 
 const { formatVnd } = useFormat()
 
@@ -46,7 +50,7 @@ const slices = computed<Slice[]>(() => {
       category: row.category,
       amount: row.amount,
       pct,
-      color: CATEGORY_COLORS[row.category] || '#94a3b8',
+      color: cats.colorFor(props.kind, row.category),
       arc: `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${xi1} ${yi1} Z`,
     })
   }
@@ -93,7 +97,7 @@ const hovered = ref<string | null>(null)
         >
           <span class="w-2 h-2 rounded-full shrink-0" :style="{ background: s.color }" />
           <span class="flex-1 truncate text-[var(--color-text-muted)]">
-            {{ CATEGORY_LABELS[s.category] || s.category }}
+            {{ cats.labelFor(props.kind, s.category) }}
           </span>
           <span class="num text-[var(--color-text)] text-xs">{{ formatVnd(s.amount) }}</span>
           <span class="num text-[var(--color-text-dim)] text-xs w-9 text-right">

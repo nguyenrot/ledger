@@ -2,7 +2,31 @@ export type LedgerKind = 'income' | 'expense'
 
 export interface LedgerCategory {
   id: string
-  label: string
+  kind: LedgerKind
+  slug: string
+  name: string
+  color: string
+  position: number
+  is_archived: boolean
+  created_at: string
+}
+
+export interface CategoriesResponse {
+  income: LedgerCategory[]
+  expense: LedgerCategory[]
+}
+
+export interface NewCategory {
+  kind: LedgerKind
+  name: string
+  color?: string
+  position?: number
+}
+
+export interface CategoryPatch {
+  name?: string
+  color?: string
+  position?: number
 }
 
 export interface Transaction {
@@ -116,7 +140,25 @@ export const useLedgerApi = () => {
         body: JSON.stringify({ token }),
       }),
     me: () => apiFetch<AccountInfo>('/api/v1/ledger/me'),
-    categories: () => apiFetch<LedgerCategory[]>('/api/v1/ledger/categories'),
+
+    categories: () => apiFetch<CategoriesResponse>('/api/v1/ledger/categories'),
+    createCategory: (body: NewCategory) =>
+      apiFetch<LedgerCategory>('/api/v1/ledger/categories', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    updateCategory: (id: string, body: CategoryPatch) =>
+      apiFetch<LedgerCategory>(`/api/v1/ledger/categories/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    deleteCategory: (id: string) =>
+      apiFetch<void>(`/api/v1/ledger/categories/${id}`, { method: 'DELETE' }),
+    reorderCategories: (kind: LedgerKind, order: string[]) =>
+      apiFetch<{ items: LedgerCategory[] }>('/api/v1/ledger/categories/reorder', {
+        method: 'POST',
+        body: JSON.stringify({ kind, order }),
+      }),
 
     listToday: () => apiFetch<TodayResponse>('/api/v1/ledger/transactions/today'),
     list: (params: { from?: string; to?: string; date?: string; kind?: LedgerKind; category?: string } = {}) =>

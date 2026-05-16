@@ -2,8 +2,17 @@
 import TopNav from '~/components/TopNav.vue'
 import BottomTabs from '~/components/BottomTabs.vue'
 import EntrySheet from '~/components/EntrySheet.vue'
+import CategoryManagerSheet from '~/components/CategoryManagerSheet.vue'
 import Toast from '~/components/Toast.vue'
 import ConfirmDialog from '~/components/ConfirmDialog.vue'
+import { useCategories } from '~/composables/useCategories'
+
+const categories = useCategories()
+onMounted(() => {
+  // Warm the cache as soon as the shell mounts so the EntrySheet's category
+  // grid and the reports breakdown have data without per-component fetches.
+  categories.ensureLoaded()
+})
 </script>
 
 <template>
@@ -16,6 +25,7 @@ import ConfirmDialog from '~/components/ConfirmDialog.vue'
     </main>
     <BottomTabs />
     <EntrySheet />
+    <CategoryManagerSheet />
     <Toast />
     <ConfirmDialog />
   </div>

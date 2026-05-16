@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useToken } from '~/composables/useToken'
 import { useEntrySheet } from '~/composables/useEntrySheet'
+import { useCategoryManager } from '~/composables/useCategoryManager'
 
 const route = useRoute()
 const { token, clearToken } = useToken()
 const sheet = useEntrySheet()
+const categoryManager = useCategoryManager()
 const menuOpen = ref(false)
 const tokenVisible = ref(false)
 
@@ -83,6 +85,13 @@ onBeforeUnmount(() => {
           v-if="menuOpen"
           class="absolute right-0 mt-1 w-72 card-flat border border-[var(--color-border)] shadow-lg py-1.5 text-sm"
         >
+          <button
+            class="w-full text-left px-3 py-2 hover:bg-[var(--color-surface-2)] transition-colors"
+            @click="categoryManager.show(); close()"
+          >
+            Quản lý danh mục
+          </button>
+          <div class="border-t border-[var(--color-border)] my-1" />
           <button
             class="w-full text-left px-3 py-2 hover:bg-[var(--color-surface-2)] transition-colors flex items-center justify-between gap-2"
             @click="tokenVisible = !tokenVisible"

@@ -1,32 +1,36 @@
 <script setup lang="ts">
-import { CATEGORY_LABELS } from '~/composables/useFormat'
+import { useCategories } from '~/composables/useCategories'
 import type { LedgerKind } from '~/composables/useLedgerApi'
 
 const props = defineProps<{
-  modelValue: string
+  modelValue: string  // slug
   kind: LedgerKind
 }>()
 const emit = defineEmits<{
   'update:modelValue': [v: string]
 }>()
 
-const incomeCats = ['salary', 'bonus', 'other']
-const expenseCats = ['food', 'transport', 'shopping', 'bills', 'entertainment', 'health', 'other']
+const { byKind, ensureLoaded } = useCategories()
 
-const cats = computed(() => (props.kind === 'income' ? incomeCats : expenseCats))
+onMounted(ensureLoaded)
 
-// Re-anchor selected to the first valid category when kind flips.
+const cats = computed(() => byKind(props.kind))
+
+// Re-anchor the selected slug when kind flips, or when the current slug isn't
+// in the kind's list (e.g. category was archived after the sheet opened).
 watch(
-  () => props.kind,
-  () => {
-    if (!cats.value.includes(props.modelValue)) {
-      emit('update:modelValue', cats.value[0]!)
+  [() => props.kind, cats],
+  ([, list]) => {
+    if (list.length === 0) return
+    if (!list.find((c) => c.slug === props.modelValue)) {
+      emit('update:modelValue', list[0]!.slug)
     }
   },
+  { immediate: true },
 )
 
-function set(c: string) {
-  if (props.modelValue !== c) emit('update:modelValue', c)
+function set(slug: string) {
+  if (props.modelValue !== slug) emit('update:modelValue', slug)
 }
 </script>
 
@@ -34,13 +38,17 @@ function set(c: string) {
   <div class="grid grid-cols-3 gap-1.5">
     <button
       v-for="c in cats"
-      :key="c"
+      :key="c.id"
       type="button"
-      class="chip py-2.5 text-sm"
-      :class="modelValue === c ? 'chip-active' : ''"
-      @click="set(c)"
+      class="chip relative py-2.5 text-sm transition-colors"
+      :class="modelValue === c.slug ? 'chip-active' : ''"
+      :style="modelValue === c.slug
+        ? { borderColor: c.color, color: c.color, backgroundColor: `${c.color}1f` }
+        : undefined"
+      @click="set(c.slug)"
     >
-      {{ CATEGORY_LABELS[c] || c }}
+      <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ background: c.color }" />
+      <span class="truncate">{{ c.name }}</span>
     </button>
   </div>
 </template>

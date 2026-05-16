@@ -66,26 +66,6 @@ export const useFormat = () => {
   }
 }
 
-export const CATEGORY_LABELS: Record<string, string> = {
-  food: 'Ăn uống',
-  transport: 'Di chuyển',
-  shopping: 'Mua sắm',
-  bills: 'Hóa đơn',
-  entertainment: 'Giải trí',
-  health: 'Sức khỏe',
-  salary: 'Lương',
-  bonus: 'Thưởng',
-  other: 'Khác',
-}
-
-export const CATEGORY_COLORS: Record<string, string> = {
-  food: '#ff6b9d',
-  transport: '#00f5ff',
-  shopping: '#aa00ff',
-  bills: '#f0b429',
-  entertainment: '#ff00aa',
-  health: '#00ff88',
-  salary: '#00ff88',
-  bonus: '#ffd700',
-  other: '#94a3b8',
-}
+// Static category dictionaries removed — categories are now per-account and
+// fetched via useCategories(). Resolve labels and colors with
+// useCategories().labelFor(kind, slug) / colorFor(kind, slug).
