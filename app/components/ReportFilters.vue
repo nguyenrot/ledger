@@ -68,34 +68,36 @@ function preset(id: string) {
 
 <template>
   <div class="card p-3 md:p-4 space-y-3">
-    <!-- Date row -->
-    <div class="flex flex-wrap items-center gap-2">
-      <label class="flex items-center gap-2 text-sm flex-1 min-w-[140px]">
-        <span class="label-dim shrink-0">Từ</span>
+    <!-- Date row: stacks on mobile because iOS renders <input type=date> as
+         the full Vietnamese locale ("ngày 16 thg 5, 2026", ~180px). Two of
+         those plus the toggle overflows on iPhone-class widths. -->
+    <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
+      <label class="flex items-center gap-2 text-sm sm:flex-1 sm:min-w-[150px]">
+        <span class="label-dim shrink-0 w-7">Từ</span>
         <input
           v-model="localFrom"
           type="date"
-          class="input !py-1.5 text-sm"
+          class="input !py-1.5 text-sm flex-1 min-w-0"
           @change="emitNow"
         />
       </label>
-      <label class="flex items-center gap-2 text-sm flex-1 min-w-[140px]">
-        <span class="label-dim shrink-0">Đến</span>
+      <label class="flex items-center gap-2 text-sm sm:flex-1 sm:min-w-[150px]">
+        <span class="label-dim shrink-0 w-7">Đến</span>
         <input
           v-model="localTo"
           type="date"
-          class="input !py-1.5 text-sm"
+          class="input !py-1.5 text-sm flex-1 min-w-0"
           @change="emitNow"
         />
       </label>
-      <div class="flex bg-[var(--color-surface-2)] p-0.5 rounded-md">
+      <div class="flex bg-[var(--color-surface-2)] p-0.5 rounded-md self-stretch sm:self-auto">
         <button
-          class="px-3 py-1.5 text-xs font-medium rounded transition-colors"
+          class="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors"
           :class="localGroupBy === 'day' ? 'bg-[var(--color-surface-3)] text-[var(--color-text)]' : 'text-[var(--color-text-dim)]'"
           @click="localGroupBy = 'day'; emitNow()"
         >Ngày</button>
         <button
-          class="px-3 py-1.5 text-xs font-medium rounded transition-colors"
+          class="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors"
           :class="localGroupBy === 'month' ? 'bg-[var(--color-surface-3)] text-[var(--color-text)]' : 'text-[var(--color-text-dim)]'"
           @click="localGroupBy = 'month'; emitNow()"
         >Tháng</button>
