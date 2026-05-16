@@ -9,8 +9,8 @@ const props = defineProps<{
 
 const { formatVnd } = useFormat()
 
-const chartHeight = 220
-const padding = { top: 16, right: 8, bottom: 28, left: 8 }
+const chartHeight = 280
+const padding = { top: 16, right: 8, bottom: 32, left: 8 }
 const innerHeight = chartHeight - padding.top - padding.bottom
 
 const maxBar = computed(() => {
@@ -25,7 +25,6 @@ function barHeight(value: number): number {
 }
 
 function shortLabel(bucket: string): string {
-  // bucket is YYYY-MM-DD or YYYY-MM
   const parts = bucket.split('-')
   if (props.groupBy === 'month') {
     return `T${parseInt(parts[1] || '0', 10)}`
@@ -33,84 +32,86 @@ function shortLabel(bucket: string): string {
   return parts[2] || ''
 }
 
+const barColWidth = 36
+const barColGap = 4
+
 const hoveredBucket = computed(() => {
   if (hovered.value === null) return null
   return props.buckets[hovered.value] ?? null
 })
+
+const chartWidth = computed(() =>
+  Math.max(props.buckets.length * barColWidth + barColGap, 240),
+)
 </script>
 
 <template>
-  <div class="card p-5 sm:p-6">
-    <div class="flex items-center justify-between mb-4">
-      <span class="label">Biểu đồ theo {{ groupBy === 'month' ? 'tháng' : 'ngày' }}</span>
-      <div class="flex items-center gap-3 text-xs font-mono">
-        <span class="flex items-center gap-1.5 text-[var(--color-emerald)]">
-          <span class="w-2 h-2 bg-[var(--color-emerald)]" /> Thu
-        </span>
-        <span class="flex items-center gap-1.5 text-[var(--color-rose)]">
-          <span class="w-2 h-2 bg-[var(--color-rose)]" /> Chi
-        </span>
+  <div class="card p-4 md:p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold">Theo {{ groupBy === 'month' ? 'tháng' : 'ngày' }}</h3>
+      <div class="flex items-center gap-3 text-xs">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 bg-[var(--color-income)]" /> Thu</span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 bg-[var(--color-expense)]" /> Chi</span>
       </div>
     </div>
 
-    <div v-if="buckets.length === 0" class="py-12 text-center text-sm text-[var(--color-fg-dim)]">
-      Chưa có dữ liệu trong khoảng này.
+    <div v-if="buckets.length === 0" class="py-12 text-center text-sm text-[var(--color-text-dim)]">
+      Không có dữ liệu trong khoảng này.
     </div>
 
-    <div v-else class="relative">
-      <div class="overflow-x-auto -mx-2 px-2 pb-2">
+    <div v-else>
+      <div class="overflow-x-auto -mx-2 px-2">
         <svg
-          :viewBox="`0 0 ${Math.max(buckets.length * 32, 200)} ${chartHeight}`"
-          :width="Math.max(buckets.length * 32, 200)"
+          :viewBox="`0 0 ${chartWidth} ${chartHeight}`"
+          :width="chartWidth"
           :height="chartHeight"
           class="block"
-          preserveAspectRatio="none"
         >
+          <!-- Baseline -->
           <line
             :x1="0"
-            :x2="Math.max(buckets.length * 32, 200)"
+            :x2="chartWidth"
             :y1="chartHeight - padding.bottom"
             :y2="chartHeight - padding.bottom"
-            stroke="rgba(26, 26, 46, 1)"
+            stroke="var(--color-border)"
             stroke-width="1"
           />
 
-          <g v-for="(b, i) in buckets" :key="b.bucket" :transform="`translate(${i * 32}, 0)`">
-            <!-- Income bar -->
+          <g v-for="(b, i) in buckets" :key="b.bucket" :transform="`translate(${i * barColWidth}, 0)`">
             <rect
-              :x="4"
+              :x="6"
               :y="chartHeight - padding.bottom - barHeight(b.income)"
-              :width="10"
+              :width="11"
               :height="barHeight(b.income)"
-              fill="var(--color-emerald)"
-              :opacity="hovered === i ? 1 : 0.78"
+              fill="var(--color-income)"
+              :opacity="hovered === null || hovered === i ? 0.95 : 0.45"
+              rx="2"
             />
-            <!-- Expense bar -->
             <rect
-              :x="16"
+              :x="19"
               :y="chartHeight - padding.bottom - barHeight(b.expense)"
-              :width="10"
+              :width="11"
               :height="barHeight(b.expense)"
-              fill="var(--color-rose)"
-              :opacity="hovered === i ? 1 : 0.78"
+              fill="var(--color-expense)"
+              :opacity="hovered === null || hovered === i ? 0.95 : 0.45"
+              rx="2"
             />
-            <!-- Hover hitbox -->
             <rect
               :x="0"
               :y="0"
-              :width="32"
+              :width="barColWidth"
               :height="chartHeight"
               fill="transparent"
               @mouseenter="hovered = i"
               @mouseleave="hovered = null"
+              @touchstart.passive="hovered = i"
             />
-            <!-- Label -->
             <text
-              :x="16"
-              :y="chartHeight - 8"
+              :x="barColWidth / 2"
+              :y="chartHeight - 10"
               text-anchor="middle"
-              fill="var(--color-fg-dim)"
-              style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;"
+              fill="var(--color-text-dim)"
+              style="font-size: 10px; font-family: var(--font-sans)"
             >
               {{ shortLabel(b.bucket) }}
             </text>
@@ -118,16 +119,10 @@ const hoveredBucket = computed(() => {
         </svg>
       </div>
 
-      <div v-if="hoveredBucket" class="mt-2 text-xs font-mono">
-        <span class="text-[var(--color-fg-muted)]">{{ hoveredBucket.bucket }}</span>
-        <span class="ml-3 kind-income">+{{ formatVnd(hoveredBucket.income) }}</span>
-        <span class="ml-3 kind-expense">−{{ formatVnd(hoveredBucket.expense) }}</span>
-        <span
-          class="ml-3"
-          :class="hoveredBucket.net >= 0 ? 'kind-net-pos' : 'kind-net-neg'"
-        >
-          net {{ hoveredBucket.net >= 0 ? '+' : '−' }}{{ formatVnd(Math.abs(hoveredBucket.net)) }}
-        </span>
+      <div v-if="hoveredBucket" class="mt-2 flex items-center gap-3 text-xs num">
+        <span class="text-[var(--color-text-muted)]">{{ hoveredBucket.bucket }}</span>
+        <span class="income">+{{ formatVnd(hoveredBucket.income) }}</span>
+        <span class="expense">−{{ formatVnd(hoveredBucket.expense) }}</span>
       </div>
     </div>
   </div>

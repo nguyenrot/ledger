@@ -6,7 +6,6 @@ const props = defineProps<{
   to: string
   groupBy: 'day' | 'month'
 }>()
-
 const emit = defineEmits<{
   update: [value: { from: string; to: string; groupBy: 'day' | 'month' }]
 }>()
@@ -25,10 +24,19 @@ function emitNow() {
   emit('update', { from: localFrom.value, to: localTo.value, groupBy: localGroupBy.value })
 }
 
-function preset(name: 'today' | 'week' | 'month' | 'year') {
+const presets: { id: string; label: string }[] = [
+  { id: 'today', label: 'Hôm nay' },
+  { id: 'week', label: '7 ngày' },
+  { id: 'month', label: 'Tháng này' },
+  { id: 'last-month', label: 'Tháng trước' },
+  { id: 'year', label: 'Năm này' },
+]
+
+function preset(id: string) {
   const now = new Date()
   let from: Date
-  switch (name) {
+  let to: Date = now
+  switch (id) {
     case 'today':
       from = new Date(now)
       break
@@ -39,79 +47,71 @@ function preset(name: 'today' | 'week' | 'month' | 'year') {
     case 'month':
       from = new Date(now.getFullYear(), now.getMonth(), 1)
       break
+    case 'last-month':
+      from = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      to = new Date(now.getFullYear(), now.getMonth(), 0)
+      break
     case 'year':
       from = new Date(now.getFullYear(), 0, 1)
       break
+    default:
+      from = now
   }
-  const y = from.getFullYear()
-  const m = String(from.getMonth() + 1).padStart(2, '0')
-  const d = String(from.getDate()).padStart(2, '0')
-  localFrom.value = `${y}-${m}-${d}`
-  localTo.value = todayIso()
-  localGroupBy.value = name === 'year' ? 'month' : 'day'
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  localFrom.value = fmt(from)
+  localTo.value = fmt(to)
+  localGroupBy.value = id === 'year' || id === 'last-month' ? 'month' : 'day'
   emitNow()
 }
 </script>
 
 <template>
-  <div class="card p-5 sm:p-6 space-y-4">
-    <div class="flex items-center justify-between">
-      <span class="label">Bộ lọc</span>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <label class="block">
-        <span class="label block mb-1.5">Từ ngày</span>
+  <div class="card p-3 md:p-4 space-y-3">
+    <!-- Date row -->
+    <div class="flex flex-wrap items-center gap-2">
+      <label class="flex items-center gap-2 text-sm flex-1 min-w-[140px]">
+        <span class="label-dim shrink-0">Từ</span>
         <input
           v-model="localFrom"
           type="date"
-          class="input-field w-full px-3 py-2 rounded-lg text-sm"
+          class="input !py-1.5 text-sm"
           @change="emitNow"
         />
       </label>
-      <label class="block">
-        <span class="label block mb-1.5">Đến ngày</span>
+      <label class="flex items-center gap-2 text-sm flex-1 min-w-[140px]">
+        <span class="label-dim shrink-0">Đến</span>
         <input
           v-model="localTo"
           type="date"
-          class="input-field w-full px-3 py-2 rounded-lg text-sm"
+          class="input !py-1.5 text-sm"
           @change="emitNow"
         />
       </label>
-    </div>
-
-    <div>
-      <span class="label block mb-2">Gom theo</span>
-      <div class="grid grid-cols-2 gap-2">
+      <div class="flex bg-[var(--color-surface-2)] p-0.5 rounded-md">
         <button
-          class="py-2 rounded-md border font-mono uppercase tracking-wider text-xs transition-colors"
-          :class="localGroupBy === 'day'
-            ? 'border-[var(--color-cyan)] bg-[rgba(0,245,255,0.12)] text-[var(--color-cyan)]'
-            : 'border-[var(--color-border)] text-[var(--color-fg-muted)] hover:border-[var(--color-cyan)]/60'"
+          class="px-3 py-1.5 text-xs font-medium rounded transition-colors"
+          :class="localGroupBy === 'day' ? 'bg-[var(--color-surface-3)] text-[var(--color-text)]' : 'text-[var(--color-text-dim)]'"
           @click="localGroupBy = 'day'; emitNow()"
-        >
-          Ngày
-        </button>
+        >Ngày</button>
         <button
-          class="py-2 rounded-md border font-mono uppercase tracking-wider text-xs transition-colors"
-          :class="localGroupBy === 'month'
-            ? 'border-[var(--color-cyan)] bg-[rgba(0,245,255,0.12)] text-[var(--color-cyan)]'
-            : 'border-[var(--color-border)] text-[var(--color-fg-muted)] hover:border-[var(--color-cyan)]/60'"
+          class="px-3 py-1.5 text-xs font-medium rounded transition-colors"
+          :class="localGroupBy === 'month' ? 'bg-[var(--color-surface-3)] text-[var(--color-text)]' : 'text-[var(--color-text-dim)]'"
           @click="localGroupBy = 'month'; emitNow()"
-        >
-          Tháng
-        </button>
+        >Tháng</button>
       </div>
     </div>
 
-    <div>
-      <span class="label block mb-2">Khoảng nhanh</span>
-      <div class="flex flex-wrap gap-1.5">
-        <button class="btn-ghost px-3 py-1.5 rounded-md text-xs" @click="preset('today')">Hôm nay</button>
-        <button class="btn-ghost px-3 py-1.5 rounded-md text-xs" @click="preset('week')">7 ngày</button>
-        <button class="btn-ghost px-3 py-1.5 rounded-md text-xs" @click="preset('month')">Tháng này</button>
-        <button class="btn-ghost px-3 py-1.5 rounded-md text-xs" @click="preset('year')">Năm này</button>
-      </div>
+    <!-- Preset row -->
+    <div class="flex flex-wrap gap-1.5">
+      <button
+        v-for="p in presets"
+        :key="p.id"
+        class="chip text-xs !py-1 !px-2.5"
+        @click="preset(p.id)"
+      >
+        {{ p.label }}
+      </button>
     </div>
   </div>
 </template>

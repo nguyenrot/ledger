@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useToken } from '~/composables/useToken'
-import CyberBackground from '~/components/CyberBackground.vue'
+import AppShell from '~/components/AppShell.vue'
 import TokenGate from '~/components/TokenGate.vue'
 
 const { token, hydrate } = useToken()
@@ -11,11 +11,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="relative min-h-screen overflow-x-hidden">
-    <CyberBackground />
-
+  <div>
     <template v-if="token">
-      <NuxtPage />
+      <AppShell>
+        <NuxtPage />
+      </AppShell>
     </template>
     <template v-else>
       <TokenGate />

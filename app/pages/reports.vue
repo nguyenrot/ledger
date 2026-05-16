@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { ApiError, useLedgerApi } from '~/composables/useLedgerApi'
 import { useFormat } from '~/composables/useFormat'
+import { useToast } from '~/composables/useToast'
 import type { Summary, Transaction } from '~/composables/useLedgerApi'
+import TransactionRow from '~/components/TransactionRow.vue'
+import ReportFilters from '~/components/ReportFilters.vue'
+import ReportChart from '~/components/ReportChart.vue'
+import ReportCategoryBreakdown from '~/components/ReportCategoryBreakdown.vue'
 
 const api = useLedgerApi()
-const { firstOfMonthIso, todayIso, formatDate } = useFormat()
+const toast = useToast()
+const { firstOfMonthIso, todayIso, formatVnd, formatSignedVnd, formatDate } = useFormat()
 
 const from = ref(firstOfMonthIso())
 const to = ref(todayIso())
@@ -13,11 +19,9 @@ const groupBy = ref<'day' | 'month'>('day')
 const summary = ref<Summary | null>(null)
 const transactions = ref<Transaction[]>([])
 const loading = ref(false)
-const error = ref('')
 
 async function load() {
   loading.value = true
-  error.value = ''
   try {
     const [s, list] = await Promise.all([
       api.summary({ from: from.value, to: to.value, group_by: groupBy.value }),
@@ -27,20 +31,15 @@ async function load() {
     transactions.value = list
   } catch (e) {
     if (!(e instanceof ApiError && e.status === 401)) {
-      error.value = (e as Error).message || 'Lỗi tải báo cáo.'
+      toast.error((e as Error).message || 'Lỗi tải báo cáo.')
     }
   } finally {
     loading.value = false
   }
 }
 
-async function handleDelete(id: string) {
-  try {
-    await api.remove(id)
-    await load()
-  } catch (e) {
-    error.value = (e as Error).message || 'Không xoá được.'
-  }
+function onChange() {
+  load()
 }
 
 function handleFilterUpdate(v: { from: string; to: string; groupBy: 'day' | 'month' }) {
@@ -50,72 +49,87 @@ function handleFilterUpdate(v: { from: string; to: string; groupBy: 'day' | 'mon
   load()
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  window.addEventListener('ledger:transactions-changed', onChange)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('ledger:transactions-changed', onChange)
+})
+
+const hasIncomeBreakdown = computed(() => (summary.value?.by_category.income.length ?? 0) > 0)
+const hasExpenseBreakdown = computed(() => (summary.value?.by_category.expense.length ?? 0) > 0)
 </script>
 
 <template>
-  <div>
-    <TopBar />
-    <main class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      <div class="mb-6">
-        <div class="label mb-1">Phân tích</div>
-        <h1 class="text-2xl sm:text-3xl font-display tracking-wider">Báo cáo</h1>
-        <p v-if="summary" class="text-sm text-[var(--color-fg-muted)] mt-1 font-mono">
-          {{ formatDate(summary.from) }} → {{ formatDate(summary.to) }}
-        </p>
+  <div class="max-w-screen-md mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
+    <!-- Filters -->
+    <ReportFilters
+      :from="from"
+      :to="to"
+      :group-by="groupBy"
+      @update="handleFilterUpdate"
+    />
+
+    <!-- Totals -->
+    <section v-if="summary" class="card p-4">
+      <div class="text-xs label-dim mb-1">
+        {{ formatDate(summary.from) }} → {{ formatDate(summary.to) }} · {{ summary.totals.count }} giao dịch
       </div>
-
-      <p v-if="error" class="mb-4 text-xs text-[var(--color-rose)] font-mono">{{ error }}</p>
-
-      <div class="grid lg:grid-cols-[280px_1fr] gap-5">
-        <aside class="space-y-4">
-          <ReportFilters
-            :from="from"
-            :to="to"
-            :group-by="groupBy"
-            @update="handleFilterUpdate"
-          />
-          <TotalsCard
-            v-if="summary"
-            label="Tổng kết khoảng"
-            :income="summary.totals.income"
-            :expense="summary.totals.expense"
-            :net="summary.totals.net"
-            :count="summary.totals.count"
-          />
-        </aside>
-
-        <div class="space-y-5 min-w-0">
-          <div v-if="loading && !summary" class="card p-6 text-sm text-[var(--color-fg-dim)]">Đang tính toán…</div>
-
-          <template v-if="summary">
-            <ReportChart :buckets="summary.buckets" :group-by="summary.group_by" />
-
-            <div class="grid sm:grid-cols-2 gap-5">
-              <ReportCategoryBreakdown
-                kind="expense"
-                title="Chi theo phân loại"
-                :rows="summary.by_category.expense"
-              />
-              <ReportCategoryBreakdown
-                kind="income"
-                title="Thu theo phân loại"
-                :rows="summary.by_category.income"
-              />
-            </div>
-
-            <div>
-              <h2 class="label mb-2 px-1">Giao dịch trong khoảng · {{ transactions.length }}</h2>
-              <TransactionList
-                :rows="transactions"
-                :show-date="true"
-                empty-hint="Không có giao dịch nào trong khoảng đã chọn."
-                @delete="handleDelete"
-              />
-            </div>
-          </template>
+      <div
+        class="text-3xl font-bold num mb-2"
+        :class="summary.totals.net >= 0 ? 'income' : 'expense'"
+      >
+        {{ formatSignedVnd(summary.totals.net) }}
+      </div>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div class="flex flex-col">
+          <span class="label-dim">Thu</span>
+          <span class="num income font-semibold">{{ formatVnd(summary.totals.income) }}</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="label-dim">Chi</span>
+          <span class="num expense font-semibold">{{ formatVnd(summary.totals.expense) }}</span>
         </div>
       </div>
-    </main>
+    </section>
+
+    <div v-if="loading && !summary" class="card p-6 text-center text-sm text-[var(--color-text-dim)]">
+      Đang tính toán…
+    </div>
+
+    <template v-if="summary">
+      <ReportChart :buckets="summary.buckets" :group-by="summary.group_by" />
+
+      <ReportCategoryBreakdown
+        v-if="hasExpenseBreakdown"
+        kind="expense"
+        title="Chi theo phân loại"
+        :rows="summary.by_category.expense"
+      />
+      <ReportCategoryBreakdown
+        v-if="hasIncomeBreakdown"
+        kind="income"
+        title="Thu theo phân loại"
+        :rows="summary.by_category.income"
+      />
+
+      <section>
+        <h3 class="text-sm font-semibold text-[var(--color-text-muted)] mb-2 px-1">
+          Giao dịch · {{ transactions.length }}
+        </h3>
+        <div v-if="transactions.length === 0" class="card p-6 text-center text-sm text-[var(--color-text-dim)]">
+          Không có giao dịch nào trong khoảng đã chọn.
+        </div>
+        <div v-else class="card overflow-hidden">
+          <TransactionRow
+            v-for="row in transactions"
+            :key="row.id"
+            :row="row"
+            :show-date="true"
+          />
+        </div>
+      </section>
+    </template>
   </div>
 </template>

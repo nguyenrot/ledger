@@ -1,93 +1,96 @@
 <script setup lang="ts">
 import { ApiError, useLedgerApi } from '~/composables/useLedgerApi'
 import { useFormat } from '~/composables/useFormat'
-import type { NewTransaction, TodayResponse } from '~/composables/useLedgerApi'
+import { useToast } from '~/composables/useToast'
+import type { TodayResponse } from '~/composables/useLedgerApi'
+import TransactionRow from '~/components/TransactionRow.vue'
 
 const api = useLedgerApi()
-const { formatRelativeDate, todayIso } = useFormat()
+const toast = useToast()
+const { formatVnd, formatSignedVnd } = useFormat()
 
 const data = ref<TodayResponse | null>(null)
 const loading = ref(false)
-const submitting = ref(false)
-const error = ref('')
 
 async function load() {
   loading.value = true
-  error.value = ''
   try {
     data.value = await api.listToday()
   } catch (e) {
     if (!(e instanceof ApiError && e.status === 401)) {
-      error.value = (e as Error).message || 'Lỗi tải dữ liệu.'
+      toast.error((e as Error).message || 'Lỗi tải dữ liệu.')
     }
   } finally {
     loading.value = false
   }
 }
 
-async function handleSubmit(payload: NewTransaction) {
-  submitting.value = true
-  error.value = ''
-  try {
-    await api.create(payload)
-    await load()
-  } catch (e) {
-    error.value = (e as Error).message || 'Không lưu được giao dịch.'
-  } finally {
-    submitting.value = false
-  }
+function onChange() {
+  load()
 }
 
-async function handleDelete(id: string) {
-  try {
-    await api.remove(id)
-    await load()
-  } catch (e) {
-    error.value = (e as Error).message || 'Không xoá được.'
-  }
-}
-
-onMounted(load)
+onMounted(() => {
+  load()
+  window.addEventListener('ledger:transactions-changed', onChange)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('ledger:transactions-changed', onChange)
+})
 </script>
 
 <template>
-  <div>
-    <TopBar />
-    <main class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      <div class="mb-6">
-        <div class="label mb-1">{{ formatRelativeDate(todayIso()) }}</div>
-        <h1 class="text-2xl sm:text-3xl font-display tracking-wider">
-          Ghi sổ thu chi
-        </h1>
+  <div class="max-w-screen-md mx-auto px-4 md:px-6 py-4 md:py-6">
+    <!-- Totals card -->
+    <section class="card p-4 mb-4">
+      <div class="flex items-baseline justify-between mb-1">
+        <span class="label">Hôm nay</span>
+        <span class="label-dim">{{ data?.count ?? 0 }} giao dịch</span>
       </div>
-
-      <p v-if="error" class="mb-4 text-xs text-[var(--color-rose)] font-mono">{{ error }}</p>
-
-      <div class="grid lg:grid-cols-[1fr_360px] gap-5">
-        <div class="space-y-5 order-2 lg:order-1">
-          <div v-if="loading && !data" class="card p-6 text-sm text-[var(--color-fg-dim)]">Đang tải…</div>
-          <div v-else>
-            <h2 class="label mb-2 px-1">Giao dịch hôm nay</h2>
-            <TransactionList
-              :rows="data?.transactions || []"
-              empty-hint="Chưa ghi gì hôm nay. Bắt đầu bằng form bên phải →"
-              @delete="handleDelete"
-            />
-          </div>
+      <div class="flex items-baseline gap-1 mb-2">
+        <span
+          class="text-3xl font-bold num"
+          :class="(data?.net ?? 0) >= 0 ? 'income' : 'expense'"
+        >
+          {{ formatSignedVnd(data?.net ?? 0) }}
+        </span>
+      </div>
+      <div class="flex gap-4 text-sm">
+        <div class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--color-income)]" />
+          <span class="text-[var(--color-text-dim)]">Thu</span>
+          <span class="num income font-medium">{{ formatVnd(data?.income ?? 0) }}</span>
         </div>
-
-        <div class="space-y-4 order-1 lg:order-2">
-          <TotalsCard
-            v-if="data"
-            label="Hôm nay"
-            :income="data.income"
-            :expense="data.expense"
-            :net="data.net"
-            :count="data.count"
-          />
-          <TransactionForm :loading="submitting" @submit="handleSubmit" />
+        <div class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--color-expense)]" />
+          <span class="text-[var(--color-text-dim)]">Chi</span>
+          <span class="num expense font-medium">{{ formatVnd(data?.expense ?? 0) }}</span>
         </div>
       </div>
-    </main>
+    </section>
+
+    <!-- Transaction list -->
+    <section>
+      <div class="flex items-center justify-between mb-2 px-1">
+        <h2 class="text-sm font-semibold text-[var(--color-text-muted)]">Giao dịch</h2>
+      </div>
+
+      <div v-if="loading && !data" class="card p-6 text-center text-sm text-[var(--color-text-dim)]">
+        Đang tải…
+      </div>
+      <div
+        v-else-if="!data?.transactions.length"
+        class="card p-8 text-center"
+      >
+        <div class="text-[var(--color-text-dim)] text-sm mb-1">Chưa ghi gì hôm nay</div>
+        <div class="text-xs text-[var(--color-text-dim)]">Nhấn nút + để thêm giao dịch đầu tiên</div>
+      </div>
+      <div v-else class="card overflow-hidden">
+        <TransactionRow
+          v-for="row in data.transactions"
+          :key="row.id"
+          :row="row"
+        />
+      </div>
+    </section>
   </div>
 </template>
