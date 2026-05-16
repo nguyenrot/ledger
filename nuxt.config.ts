@@ -23,16 +23,30 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Ledger · kynguyen.cc',
+      title: 'Ledger',
       htmlAttrs: { lang: 'vi' },
       meta: [
         { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'Ghi chép thu chi cá nhân theo phong cách cyberpunk + tu tiên.' },
-        { name: 'theme-color', content: '#020208' },
+        // `viewport-fit=cover` lets the page render under the iOS status bar /
+        // home indicator; the layout uses env(safe-area-inset-*) to keep the
+        // interactive content out of those reserved zones.
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no' },
+        { name: 'description', content: 'Ghi chép thu chi cá nhân.' },
+        // Background color of the URL bar (Android) and PWA splash (iOS).
+        { name: 'theme-color', content: '#0a0a0c' },
+        // Tell iOS this site can be installed and run standalone (no Safari chrome).
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
+        // `black-translucent` lets content render under the status bar — combined
+        // with `viewport-fit=cover` this gives an edge-to-edge app feel.
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+        { name: 'apple-mobile-web-app-title', content: 'Ledger' },
+        { name: 'format-detection', content: 'telephone=no' },
       ],
       link: [
-        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/icon.svg' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/manifest.webmanifest' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {

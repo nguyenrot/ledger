@@ -213,7 +213,12 @@ async function handleSubmit() {
         </div>
 
         <!-- Submit -->
-        <div class="px-4 pb-4 pt-2 border-t border-[var(--color-border)] safe-bottom">
+        <!-- pb stacks Tailwind pb-4 + safe-area-inset-bottom so the Ghi button
+             clears the iOS home indicator without overlapping it. -->
+        <div
+          class="px-4 pt-2 border-t border-[var(--color-border)]"
+          style="padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);"
+        >
           <button
             type="button"
             class="btn btn-primary w-full !py-3 text-base font-semibold"

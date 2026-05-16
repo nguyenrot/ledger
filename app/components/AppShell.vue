@@ -9,7 +9,9 @@ import ConfirmDialog from '~/components/ConfirmDialog.vue'
 <template>
   <div class="min-h-screen flex flex-col">
     <TopNav />
-    <main class="flex-1 pb-24 md:pb-8">
+    <!-- Mobile: pad top by the iOS status-bar inset so the totals card clears
+         the Dynamic Island. Desktop has TopNav doing this implicitly. -->
+    <main class="flex-1 pb-24 md:pb-8 pt-[env(safe-area-inset-top)] md:pt-0">
       <slot />
     </main>
     <BottomTabs />
