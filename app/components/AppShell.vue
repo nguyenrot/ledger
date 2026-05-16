@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import TopNav from '~/components/TopNav.vue'
+import MobileTopBar from '~/components/MobileTopBar.vue'
 import BottomTabs from '~/components/BottomTabs.vue'
 import EntrySheet from '~/components/EntrySheet.vue'
 import CategoryManagerSheet from '~/components/CategoryManagerSheet.vue'
@@ -18,9 +19,10 @@ onMounted(() => {
 <template>
   <div class="min-h-screen flex flex-col">
     <TopNav />
-    <!-- Mobile: pad top by the iOS status-bar inset so the totals card clears
-         the Dynamic Island. Desktop has TopNav doing this implicitly. -->
-    <main class="flex-1 pb-24 md:pb-8 pt-[env(safe-area-inset-top)] md:pt-0">
+    <!-- MobileTopBar handles the iOS status-bar inset on mobile via its own
+         padding-top, so main doesn't need additional pt-[safe-inset-top]. -->
+    <MobileTopBar />
+    <main class="flex-1 pb-24 md:pb-8">
       <slot />
     </main>
     <BottomTabs />
