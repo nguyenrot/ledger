@@ -267,7 +267,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
           <!-- Inline create form -->
           <div v-if="editingId === ''" class="card-flat p-3 border border-[var(--color-accent)] space-y-3">
             <input
-              ref="draftName"
               v-model="draftName"
               type="text"
               maxlength="40"
