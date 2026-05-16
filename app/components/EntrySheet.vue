@@ -39,7 +39,6 @@ async function handleDelete() {
 const error = ref('')
 const submitting = ref(false)
 const showAdvanced = ref(false)
-const noteInput = ref<HTMLInputElement | null>(null)
 
 const amountValue = computed(() => {
   const n = Number(state.value.amount || '0')
@@ -191,35 +190,39 @@ async function handleSubmit() {
           </div>
           <CategoryGrid v-model="state.category" :kind="state.kind" class="mb-3" />
 
-          <!-- Advanced toggle -->
+          <!-- Always-visible note input. Anh dùng note thường xuyên nên không thu
+               gọn nữa; ngày backdate nằm trong toggle bên dưới vì ít dùng. -->
+          <input
+            v-model="state.note"
+            type="text"
+            maxlength="255"
+            class="input mb-2"
+            placeholder="Ghi chú (VD: Cơm tấm Sài Gòn)"
+          />
+
           <button
             type="button"
-            class="w-full flex items-center justify-between gap-2 py-2 mb-2 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
-            @click="showAdvanced = !showAdvanced; nextTick(() => noteInput?.focus())"
+            class="w-full flex items-center justify-between gap-2 py-1.5 mb-2 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+            @click="showAdvanced = !showAdvanced"
           >
-            <span>{{ showAdvanced ? 'Thu gọn' : 'Ghi chú & ngày' }}</span>
+            <span class="flex items-center gap-1.5">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              {{ showAdvanced ? 'Thu gọn' : `Ngày: ${formatRelativeDate(state.occurredOn)}` }}
+            </span>
             <span class="text-[var(--color-text-dim)]">{{ showAdvanced ? '▴' : '▾' }}</span>
           </button>
 
-          <div v-if="showAdvanced" class="space-y-2 mb-3">
+          <div v-if="showAdvanced" class="mb-2">
             <input
-              ref="noteInput"
-              v-model="state.note"
-              type="text"
-              maxlength="255"
+              v-model="state.occurredOn"
+              type="date"
               class="input"
-              placeholder="Ghi chú (VD: Cơm tấm Sài Gòn)"
             />
-            <div class="flex items-center gap-2">
-              <input
-                v-model="state.occurredOn"
-                type="date"
-                class="input flex-1"
-              />
-              <span class="text-xs text-[var(--color-text-dim)] whitespace-nowrap">
-                {{ formatRelativeDate(state.occurredOn) }}
-              </span>
-            </div>
           </div>
 
           <!-- Numpad -->
