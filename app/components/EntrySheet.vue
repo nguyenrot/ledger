@@ -249,30 +249,3 @@ async function handleSubmit() {
   </Teleport>
 </template>
 
-<style scoped>
-@media (min-width: 768px) {
-  .sheet-mobile {
-    left: 50%;
-    right: auto;
-    top: 50%;
-    bottom: auto;
-    transform: translate(-50%, -50%);
-    width: 480px;
-    max-width: 92vw;
-    max-height: 88vh;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-  }
-}
-.sheet-enter-active.sheet-mobile,
-.sheet-leave-active.sheet-mobile {
-  transition: opacity 200ms ease, transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-@media (min-width: 768px) {
-  .sheet-enter-from.sheet-mobile,
-  .sheet-leave-to.sheet-mobile {
-    opacity: 0;
-    transform: translate(-50%, -45%);
-  }
-}
-</style>
