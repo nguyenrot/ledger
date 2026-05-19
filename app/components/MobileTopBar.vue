@@ -2,6 +2,7 @@
 import { useToken } from '~/composables/useToken'
 import { useCategoryManager } from '~/composables/useCategoryManager'
 import { useConfirm } from '~/composables/useConfirm'
+import ThemeSwitcher from '~/components/ThemeSwitcher.vue'
 
 const { token, clearToken } = useToken()
 const categoryManager = useCategoryManager()
@@ -84,6 +85,8 @@ onBeforeUnmount(() => document.removeEventListener('click', close))
             >
               Quản lý danh mục
             </button>
+            <ThemeSwitcher />
+            <div class="divider my-1" />
             <button
               class="w-full text-left px-3 py-2.5 hover:bg-[var(--color-surface-2)] transition-colors flex items-center justify-between gap-2"
               @click="tokenVisible = !tokenVisible"

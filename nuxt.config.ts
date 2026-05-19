@@ -54,6 +54,15 @@ export default defineNuxtConfig({
           href: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap',
         },
       ],
+      // Pre-paint theme hydration — runs before the Vue bundle to avoid the
+      // dark→light flash for users who saved a light-mode preference. Keep in
+      // sync with the storage key used by `composables/useTheme.ts`.
+      script: [
+        {
+          innerHTML: `(function(){try{var k='x106-ledger-theme';var v=localStorage.getItem(k);var t=(v==='light'||v==='dark')?v:(window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t==='light'?'#fafbfc':'#0a0a0c');}catch(e){}})();`,
+          tagPosition: 'head',
+        },
+      ],
     },
   },
 

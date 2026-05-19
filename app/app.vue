@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { useToken } from '~/composables/useToken'
+import { useTheme } from '~/composables/useTheme'
 import AppShell from '~/components/AppShell.vue'
 import TokenGate from '~/components/TokenGate.vue'
 
-const { token, hydrate } = useToken()
+const { token, hydrate: hydrateToken } = useToken()
+const { hydrate: hydrateTheme } = useTheme()
 
 onMounted(() => {
-  hydrate()
+  hydrateToken()
+  hydrateTheme()
 })
 </script>
 

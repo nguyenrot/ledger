@@ -16,8 +16,8 @@ const { toasts, dismiss } = useToast()
           class="pointer-events-auto max-w-sm w-fit px-4 py-2.5 rounded-xl border text-sm font-medium flex items-center gap-3"
           :class="{
             'bg-[var(--color-surface)] border-[var(--color-border-strong)] text-[var(--color-text)]': t.kind === 'info',
-            'bg-[#0a1f1a] border-[var(--color-income)]/60 text-[var(--color-income)]': t.kind === 'success',
-            'bg-[#1f0d0d] border-[var(--color-expense)]/60 text-[var(--color-expense)]': t.kind === 'error',
+            'bg-[var(--color-toast-success-bg)] border-[var(--color-income)]/60 text-[var(--color-income)]': t.kind === 'success',
+            'bg-[var(--color-toast-error-bg)] border-[var(--color-expense)]/60 text-[var(--color-expense)]': t.kind === 'error',
           }"
           style="box-shadow: var(--shadow-popover);"
         >

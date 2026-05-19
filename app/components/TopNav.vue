@@ -3,6 +3,7 @@ import { useToken } from '~/composables/useToken'
 import { useEntrySheet } from '~/composables/useEntrySheet'
 import { useCategoryManager } from '~/composables/useCategoryManager'
 import { useConfirm } from '~/composables/useConfirm'
+import ThemeSwitcher from '~/components/ThemeSwitcher.vue'
 
 const route = useRoute()
 const { token, clearToken } = useToken()
@@ -119,6 +120,7 @@ onBeforeUnmount(() => {
           >
             Quản lý danh mục
           </button>
+          <ThemeSwitcher />
           <div class="divider my-1" />
           <button
             class="w-full text-left px-3 py-2 hover:bg-[var(--color-surface-2)] transition-colors flex items-center justify-between gap-2"
