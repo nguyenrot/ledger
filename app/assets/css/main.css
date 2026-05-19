@@ -1,38 +1,54 @@
 @import "tailwindcss";
 
 /* ── Design tokens ──────────────────────────────────────────────────────
-   Dark minimal — no glow, no gradient, no decorative ornaments. The list
-   and the entry sheet are the entire app; the chrome stays out of the way. */
+   Premium minimal — off-black surfaces, single teal accent, semantic
+   income/expense pair. No neon glows, no purple gradients. The chrome
+   stays quiet so the transaction list reads first. */
 
 @theme {
-  --color-bg: #0a0a0c;
-  --color-surface: #15151a;
-  --color-surface-2: #1c1c22;
-  --color-surface-3: #25252b;
-  --color-border: #2a2a31;
-  --color-border-strong: #3a3a44;
+  /* Surfaces — warm off-black, not pure #000 */
+  --color-bg: #08080a;
+  --color-surface: #0e0e12;
+  --color-surface-2: #14141a;
+  --color-surface-3: #1c1c24;
+  --color-border: #22222b;
+  --color-border-strong: #33333d;
 
-  --color-text: #e8e8ec;
-  --color-text-muted: #9a9aa3;
-  --color-text-dim: #6e6e76;
+  /* Text — slight warm cast away from pure white */
+  --color-text: #ececef;
+  --color-text-muted: #93939d;
+  --color-text-dim: #5e5e68;
 
-  --color-income: #34d399;
-  --color-income-dim: #1f6f54;
+  /* Semantic — income / expense / accent. Saturation kept below 80%. */
+  --color-income: #2bd4a0;
+  --color-income-dim: #1a6f54;
+  --color-income-deep: #0d3b30;
   --color-expense: #f87171;
   --color-expense-dim: #7a2f2f;
+  --color-expense-deep: #3a1414;
   --color-accent: #14b8a6;
+  --color-accent-soft: rgba(20, 184, 166, 0.14);
   --color-accent-dim: #0f5c55;
-  --color-warning: #fbbf24;
+  --color-warning: #f0b429;
 
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Typography — Outfit body, JetBrains Mono for numerics. Inter is banned. */
+  --font-sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  --radius-chip: 8px;
-  --radius-card: 12px;
-  --radius-sheet: 20px;
+  /* Radii — slightly more generous for premium feel */
+  --radius-chip: 10px;
+  --radius-card: 16px;
+  --radius-sheet: 22px;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-fab: 0 4px 16px rgba(20, 184, 166, 0.4);
+  /* Shadows — diffusion, no glows */
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sheet: 0 -16px 48px rgba(0, 0, 0, 0.7);
+  --shadow-fab: 0 8px 24px rgba(20, 184, 166, 0.28), 0 2px 6px rgba(20, 184, 166, 0.15);
+  --shadow-popover: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+
+  /* Motion */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 :root {
@@ -47,7 +63,9 @@ html, body, #__nuxt {
 body {
   color: var(--color-text);
   font-family: var(--font-sans);
-  font-feature-settings: 'ss01', 'tnum';
+  font-feature-settings: 'ss01', 'cv11', 'tnum';
+  font-weight: 400;
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
@@ -63,11 +81,23 @@ body {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
 }
 
 .card-flat {
   background: var(--color-surface);
   border-radius: var(--radius-card);
+}
+
+.surface-2 {
+  background: var(--color-surface-2);
+  border-radius: var(--radius-chip);
+}
+
+/* Soft divider used to group rows without ringing them with a card border. */
+.divider {
+  height: 1px;
+  background: var(--color-border);
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────────── */
@@ -82,7 +112,10 @@ body {
   font-weight: 500;
   font-size: 0.875rem;
   line-height: 1;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition: background-color 120ms var(--ease-out-quart),
+              border-color 120ms var(--ease-out-quart),
+              color 120ms var(--ease-out-quart),
+              transform 80ms var(--ease-out-quart);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
@@ -93,17 +126,18 @@ body {
   cursor: not-allowed;
 }
 
+.btn:not(:disabled):active {
+  transform: translateY(1px) scale(0.985);
+}
+
 .btn-primary {
   background: var(--color-accent);
-  color: #062b2a;
+  color: #04201f;
   border: 1px solid var(--color-accent);
 }
 .btn-primary:hover:not(:disabled) {
-  background: #1ad6c4;
-  border-color: #1ad6c4;
-}
-.btn-primary:active:not(:disabled) {
-  background: #0fa595;
+  background: #1bd2bd;
+  border-color: #1bd2bd;
 }
 
 .btn-ghost {
@@ -135,12 +169,14 @@ body {
   padding: 0.625rem 0.875rem;
   font-size: 0.9375rem;
   width: 100%;
-  transition: border-color 120ms ease;
+  transition: border-color 140ms var(--ease-out-quart),
+              background-color 140ms var(--ease-out-quart);
   font-family: var(--font-sans);
 }
 .input:focus {
   outline: none;
   border-color: var(--color-accent);
+  background: var(--color-surface-3);
 }
 .input::placeholder {
   color: var(--color-text-dim);
@@ -162,7 +198,10 @@ body {
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
-  transition: all 120ms ease;
+  transition: background-color 120ms var(--ease-out-quart),
+              border-color 120ms var(--ease-out-quart),
+              color 120ms var(--ease-out-quart),
+              transform 80ms var(--ease-out-quart);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -170,13 +209,16 @@ body {
   background: var(--color-surface-3);
   color: var(--color-text);
 }
+.chip:active {
+  transform: translateY(1px);
+}
 .chip-active {
-  background: rgba(20, 184, 166, 0.12);
+  background: var(--color-accent-soft);
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
 .chip-income-active {
-  background: rgba(52, 211, 153, 0.12);
+  background: rgba(43, 212, 160, 0.12);
   border-color: var(--color-income);
   color: var(--color-income);
 }
@@ -187,6 +229,14 @@ body {
 }
 
 /* ── Typography helpers ──────────────────────────────────────────────── */
+
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
 .label {
   font-size: 0.75rem;
@@ -202,12 +252,31 @@ body {
 }
 
 .num {
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  font-feature-settings: 'tnum', 'ss02';
+}
+
+.display-num {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  font-feature-settings: 'tnum', 'ss02';
 }
 
 .income { color: var(--color-income); }
 .expense { color: var(--color-expense); }
+
+/* Tiny status dot used in nav + transaction list */
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
 
 /* ── Sheet & dialog primitives ───────────────────────────────────────── */
 
@@ -216,8 +285,8 @@ body {
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
   z-index: 40;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .sheet-mobile {
@@ -230,7 +299,7 @@ body {
   border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
   box-shadow: var(--shadow-sheet);
   z-index: 50;
-  max-height: 92vh;
+  max-height: 92dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -265,40 +334,96 @@ body {
   }
   .sheet-enter-active.sheet-mobile,
   .sheet-leave-active.sheet-mobile {
-    transition: opacity 200ms ease, transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+    transition: opacity 220ms var(--ease-spring), transform 280ms var(--ease-spring);
   }
 }
 
 /* ── Transitions ─────────────────────────────────────────────────────── */
 
 .sheet-enter-active, .sheet-leave-active {
-  transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 280ms var(--ease-spring);
 }
 .sheet-enter-from, .sheet-leave-to {
   transform: translateY(100%);
 }
 
 .fade-enter-active, .fade-leave-active {
-  transition: opacity 160ms ease;
+  transition: opacity 180ms var(--ease-out-quart);
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
 
 .toast-enter-active, .toast-leave-active {
-  transition: all 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: all 220ms var(--ease-spring);
 }
 .toast-enter-from, .toast-leave-to {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(10px);
 }
 
 .row-enter-active {
-  transition: all 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: opacity 260ms var(--ease-out-quart), transform 260ms var(--ease-spring);
 }
 .row-enter-from {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+/* ── Stagger entrance — used by transaction lists ────────────────────── */
+
+@keyframes stagger-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-fade-up {
+  opacity: 0;
+  animation: stagger-fade-up 380ms var(--ease-spring) forwards;
+  animation-delay: calc(var(--stagger-index, 0) * 28ms);
+}
+
+/* ── Perpetual micro-interactions ────────────────────────────────────── */
+
+@keyframes breathe-ring {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.25;
+  }
+}
+
+.breathe-ring {
+  animation: breathe-ring 2.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 0%,
+    var(--color-surface-3) 50%,
+    var(--color-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: var(--radius-chip);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+.pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
 /* ── Scrollbars hidden — single-purpose app, no scrollbar gutter ─────── */
@@ -331,4 +456,13 @@ body {
 input, textarea, [contenteditable] {
   -webkit-user-select: text;
   user-select: text;
+}
+
+/* Respect users who ask for less motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

@@ -16,8 +16,6 @@ onMounted(ensureLoaded)
 
 const cats = computed(() => byKind(props.kind))
 
-// Re-anchor the selected slug when kind flips, or when the current slug isn't
-// in the kind's list (e.g. category was archived after the sheet opened).
 watch(
   [() => props.kind, cats],
   ([, list]) => {
@@ -40,14 +38,14 @@ function set(slug: string) {
       v-for="c in cats"
       :key="c.id"
       type="button"
-      class="chip relative py-2.5 text-sm transition-colors"
+      class="chip relative !py-2.5 text-sm"
       :class="modelValue === c.slug ? 'chip-active' : ''"
       :style="modelValue === c.slug
-        ? { borderColor: c.color, color: c.color, backgroundColor: `${c.color}1f` }
+        ? { borderColor: c.color, color: c.color, backgroundColor: `${c.color}22` }
         : undefined"
       @click="set(c.slug)"
     >
-      <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ background: c.color }" />
+      <span class="dot shrink-0" :style="{ background: c.color }" />
       <span class="truncate">{{ c.name }}</span>
     </button>
   </div>

@@ -54,7 +54,6 @@ watch(
     if (open) {
       error.value = ''
       showAdvanced.value = false
-      // Prevent body scroll while sheet is open
       if (import.meta.client) document.body.style.overflow = 'hidden'
     } else if (import.meta.client) {
       document.body.style.overflow = ''
@@ -122,14 +121,13 @@ async function handleSubmit() {
         class="sheet-mobile md:sheet-desktop"
         @click.stop
       >
-        <!-- Mobile drag handle -->
         <div class="sheet-handle md:hidden" />
 
-        <!-- Header -->
+        <!-- Header — quieter, balanced -->
         <div class="flex items-center justify-between px-4 pt-3 pb-2 md:pt-5">
           <button
             type="button"
-            class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)]"
+            class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] transition-colors"
             aria-label="Đóng"
             @click="close"
           >
@@ -138,13 +136,13 @@ async function handleSubmit() {
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-          <h2 class="text-sm font-semibold">
+          <h2 class="text-sm font-semibold tracking-tight">
             {{ state.mode === 'edit' ? 'Sửa giao dịch' : 'Ghi giao dịch' }}
           </h2>
           <button
             v-if="state.mode === 'edit'"
             type="button"
-            class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-2)] text-[var(--color-expense)]"
+            class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-2)] text-[var(--color-expense)] transition-colors"
             aria-label="Xoá giao dịch"
             @click="handleDelete"
           >
@@ -158,40 +156,35 @@ async function handleSubmit() {
           <div v-else class="w-8" />
         </div>
 
-        <!-- Scrollable body -->
         <div class="flex-1 overflow-y-auto px-4 pb-3">
-          <!-- Kind switch -->
-          <KindSwitch v-model="state.kind" class="mb-3" />
+          <KindSwitch v-model="state.kind" class="mb-4" />
 
-          <!-- Big amount display -->
-          <div class="text-center py-4">
+          <!-- Big amount display — display-num for premium mono kerning -->
+          <div class="text-center py-5">
             <div
-              class="text-4xl font-bold num tracking-tight"
+              class="display-num text-[42px] md:text-5xl leading-none tracking-[-0.04em]"
               :class="state.kind === 'income' ? 'income' : 'expense'"
             >
               {{ state.kind === 'income' ? '+' : '−' }}{{ amountDisplay }}
             </div>
           </div>
 
-          <!-- Category grid + manager shortcut -->
-          <div class="flex items-center justify-between gap-2 mb-1.5">
-            <span class="text-[11px] uppercase tracking-wider text-[var(--color-text-dim)]">Phân loại</span>
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <span class="eyebrow">Phân loại</span>
             <button
               type="button"
               class="text-[11px] text-[var(--color-text-dim)] hover:text-[var(--color-accent)] inline-flex items-center gap-1 transition-colors"
               @click="categoryManager.show()"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
               </svg>
               Quản lý
             </button>
           </div>
           <CategoryGrid v-model="state.category" :kind="state.kind" class="mb-3" />
 
-          <!-- Always-visible note input. Anh dùng note thường xuyên nên không thu
-               gọn nữa; ngày backdate nằm trong toggle bên dưới vì ít dùng. -->
           <input
             v-model="state.note"
             type="text"
@@ -202,11 +195,11 @@ async function handleSubmit() {
 
           <button
             type="button"
-            class="w-full flex items-center justify-between gap-2 py-1.5 mb-2 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+            class="w-full flex items-center justify-between gap-2 py-2 mb-2 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
             @click="showAdvanced = !showAdvanced"
           >
             <span class="flex items-center gap-1.5">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
@@ -214,41 +207,51 @@ async function handleSubmit() {
               </svg>
               {{ showAdvanced ? 'Thu gọn' : `Ngày: ${formatRelativeDate(state.occurredOn)}` }}
             </span>
-            <span class="text-[var(--color-text-dim)]">{{ showAdvanced ? '▴' : '▾' }}</span>
+            <svg
+              width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+              class="text-[var(--color-text-dim)] transition-transform"
+              :class="showAdvanced ? 'rotate-180' : ''"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </button>
 
           <div v-if="showAdvanced" class="mb-2">
             <input
               v-model="state.occurredOn"
               type="date"
-              class="input"
+              class="input num"
             />
           </div>
 
-          <!-- Numpad -->
           <AmountKeypad v-model="state.amount" />
 
           <p v-if="error" class="text-xs text-[var(--color-expense)] mt-3 text-center">{{ error }}</p>
         </div>
 
-        <!-- Submit -->
-        <!-- pb stacks Tailwind pb-4 + safe-area-inset-bottom so the Ghi button
-             clears the iOS home indicator without overlapping it. -->
         <div
           class="px-4 pt-2 border-t border-[var(--color-border)]"
           style="padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);"
         >
           <button
             type="button"
-            class="btn btn-primary w-full !py-3 text-base font-semibold"
+            class="btn btn-primary w-full !py-3.5 text-base font-semibold"
             :disabled="!canSubmit"
             @click="handleSubmit"
           >
-            {{ submitting ? 'Đang lưu…' : (state.mode === 'edit' ? 'Lưu thay đổi' : 'Ghi') }}
+            <template v-if="!submitting">
+              {{ state.mode === 'edit' ? 'Lưu thay đổi' : 'Ghi giao dịch' }}
+            </template>
+            <template v-else>
+              <span class="inline-flex items-center gap-2">
+                <span class="dot pulse-dot bg-[#04201f]" />
+                Đang lưu…
+              </span>
+            </template>
           </button>
         </div>
       </div>
     </Transition>
   </Teleport>
 </template>
-

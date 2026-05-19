@@ -15,7 +15,7 @@ const toast = useToast()
 const confirm = useConfirm()
 
 const activeKind = ref<LedgerKind>('expense')
-const editingId = ref<string | null>(null)  // null = no edit, '' = creating new
+const editingId = ref<string | null>(null)
 const draftName = ref('')
 const draftColor = ref(CATEGORY_COLOR_SWATCHES[0]!)
 const busy = ref(false)
@@ -103,7 +103,6 @@ async function move(c: LedgerCategory, dir: -1 | 1) {
   if (idx < 0) return
   const targetIdx = idx + dir
   if (targetIdx < 0 || targetIdx >= list.length) return
-  // Swap
   ;[list[idx], list[targetIdx]] = [list[targetIdx]!, list[idx]!]
   try {
     await api.reorderCategories(activeKind.value, list.map((x) => x.id))
@@ -134,11 +133,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
       <div v-if="open" class="sheet-mobile md:sheet-desktop" @click.stop>
         <div class="sheet-handle md:hidden" />
 
-        <!-- Header -->
         <div class="flex items-center justify-between px-4 pt-3 pb-2 md:pt-5">
           <button
             type="button"
-            class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)]"
+            class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] transition-colors"
             aria-label="Đóng"
             @click="close"
           >
@@ -147,41 +145,40 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-          <h2 class="text-sm font-semibold">Quản lý danh mục</h2>
+          <h2 class="text-sm font-semibold tracking-tight">Quản lý danh mục</h2>
           <div class="w-8" />
         </div>
 
-        <!-- Kind switch -->
+        <!-- Kind switch — same sliding style as the entry sheet -->
         <div class="px-4">
-          <div class="grid grid-cols-2 gap-1.5 bg-[var(--color-surface-2)] p-1 rounded-lg">
+          <div class="relative grid grid-cols-2 bg-[var(--color-surface-2)] p-1 rounded-xl border border-[var(--color-border)]">
+            <div
+              class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg transition-transform duration-300 ease-out"
+              :class="activeKind === 'expense' ? 'bg-[var(--color-expense)] left-1' : 'bg-[var(--color-income)] left-1 translate-x-[calc(100%+4px)]'"
+              aria-hidden="true"
+            />
             <button
               type="button"
-              class="py-2 rounded-md text-sm font-semibold transition-colors"
-              :class="activeKind === 'expense'
-                ? 'bg-[var(--color-expense)] text-[#2a0808]'
-                : 'text-[var(--color-text-muted)]'"
+              class="relative z-10 py-2 rounded-lg text-sm font-semibold transition-colors"
+              :class="activeKind === 'expense' ? 'text-[#2a0808]' : 'text-[var(--color-text-muted)]'"
               @click="activeKind = 'expense'; editingId = null"
             >Chi</button>
             <button
               type="button"
-              class="py-2 rounded-md text-sm font-semibold transition-colors"
-              :class="activeKind === 'income'
-                ? 'bg-[var(--color-income)] text-[#062a1a]'
-                : 'text-[var(--color-text-muted)]'"
+              class="relative z-10 py-2 rounded-lg text-sm font-semibold transition-colors"
+              :class="activeKind === 'income' ? 'text-[#04201f]' : 'text-[var(--color-text-muted)]'"
               @click="activeKind = 'income'; editingId = null"
             >Thu</button>
           </div>
         </div>
 
-        <!-- List -->
         <div class="flex-1 overflow-y-auto px-4 py-3 space-y-1.5">
           <div v-if="cats.loading.value && currentList.length === 0" class="py-6 text-center text-sm text-[var(--color-text-dim)]">
             Đang tải…
           </div>
 
           <template v-for="(c, idx) in currentList" :key="c.id">
-            <!-- Edit row -->
-            <div v-if="editingId === c.id" class="card-flat p-3 border border-[var(--color-accent)] space-y-3">
+            <div v-if="editingId === c.id" class="surface-2 p-3 border border-[var(--color-accent)] space-y-3 rounded-xl">
               <input
                 v-model="draftName"
                 type="text"
@@ -210,15 +207,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
               </div>
             </div>
 
-            <!-- Display row -->
-            <div v-else class="card-flat flex items-center gap-3 px-3 py-2.5">
-              <span class="w-3 h-3 rounded-full shrink-0" :style="{ background: c.color }" />
+            <div v-else class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--color-surface-2)] transition-colors group">
+              <span class="dot shrink-0" :style="{ background: c.color }" />
               <span class="flex-1 text-sm truncate">{{ c.name }}</span>
 
               <div class="flex items-center text-[var(--color-text-dim)]">
                 <button
                   type="button"
-                  class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-2)] disabled:opacity-30"
+                  class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-3)] disabled:opacity-30 transition-colors"
                   :disabled="idx === 0"
                   aria-label="Lên"
                   @click="move(c, -1)"
@@ -229,7 +225,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
                 </button>
                 <button
                   type="button"
-                  class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-2)] disabled:opacity-30"
+                  class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-3)] disabled:opacity-30 transition-colors"
                   :disabled="idx === currentList.length - 1"
                   aria-label="Xuống"
                   @click="move(c, 1)"
@@ -240,7 +236,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
                 </button>
                 <button
                   type="button"
-                  class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]"
+                  class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-3)] hover:text-[var(--color-text)] transition-colors"
                   aria-label="Sửa"
                   @click="startEdit(c)"
                 >
@@ -251,7 +247,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
                 </button>
                 <button
                   type="button"
-                  class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-2)] hover:text-[var(--color-expense)]"
+                  class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-3)] hover:text-[var(--color-expense)] transition-colors"
                   aria-label="Xoá"
                   @click="deleteCategory(c)"
                 >
@@ -264,8 +260,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
             </div>
           </template>
 
-          <!-- Inline create form -->
-          <div v-if="editingId === ''" class="card-flat p-3 border border-[var(--color-accent)] space-y-3">
+          <div v-if="editingId === ''" class="surface-2 p-3 border border-[var(--color-accent)] space-y-3 rounded-xl">
             <input
               v-model="draftName"
               type="text"
@@ -295,14 +290,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
           </div>
         </div>
 
-        <!-- Footer with add button -->
         <div
           v-if="editingId === null"
           class="px-4 pt-2 border-t border-[var(--color-border)]"
           style="padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);"
         >
           <button class="btn btn-primary w-full !py-3 text-base font-semibold" @click="startCreate">
-            + Thêm danh mục
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Thêm danh mục
           </button>
         </div>
       </div>

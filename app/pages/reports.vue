@@ -59,11 +59,65 @@ onBeforeUnmount(() => {
 
 const hasIncomeBreakdown = computed(() => (summary.value?.by_category.income.length ?? 0) > 0)
 const hasExpenseBreakdown = computed(() => (summary.value?.by_category.expense.length ?? 0) > 0)
+
+// Split bar for income vs expense
+const split = computed(() => {
+  const inc = summary.value?.totals.income ?? 0
+  const exp = summary.value?.totals.expense ?? 0
+  const sum = inc + exp
+  if (sum === 0) return { inc: 0, exp: 0 }
+  return { inc: (inc / sum) * 100, exp: (exp / sum) * 100 }
+})
 </script>
 
 <template>
-  <div class="max-w-screen-md mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
-    <!-- Filters -->
+  <div class="max-w-screen-md mx-auto px-4 md:px-6 py-6 md:py-10 space-y-10">
+    <!-- Hero — eyebrow + date range + big net + split bar -->
+    <header v-if="summary">
+      <div class="flex items-baseline justify-between mb-1">
+        <span class="eyebrow">Báo cáo</span>
+        <span class="label-dim num">{{ summary.totals.count }} giao dịch</span>
+      </div>
+      <div class="text-sm text-[var(--color-text-muted)] num mb-5">
+        {{ formatDate(summary.from) }} → {{ formatDate(summary.to) }}
+      </div>
+
+      <div
+        class="display-num text-5xl md:text-6xl leading-none mb-5 tabular-nums"
+        :class="summary.totals.net >= 0 ? 'income' : 'expense'"
+      >
+        {{ formatSignedVnd(summary.totals.net) }}
+      </div>
+
+      <div class="space-y-2.5">
+        <div class="flex h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-2)]">
+          <div
+            v-if="split.inc > 0"
+            class="h-full bg-[var(--color-income)] transition-all duration-500"
+            :style="{ width: `${split.inc}%` }"
+          />
+          <div
+            v-if="split.exp > 0"
+            class="h-full bg-[var(--color-expense)] transition-all duration-500"
+            :style="{ width: `${split.exp}%` }"
+          />
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="flex items-center gap-2">
+            <span class="dot bg-[var(--color-income)]" />
+            <span class="text-[var(--color-text-muted)]">Thu</span>
+            <span class="num income font-medium">{{ formatVnd(summary.totals.income) }}</span>
+          </div>
+          <div class="flex items-center gap-2 justify-end">
+            <span class="dot bg-[var(--color-expense)]" />
+            <span class="text-[var(--color-text-muted)]">Chi</span>
+            <span class="num expense font-medium">{{ formatVnd(summary.totals.expense) }}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filters — quiet, no card -->
     <ReportFilters
       :from="from"
       :to="to"
@@ -71,30 +125,7 @@ const hasExpenseBreakdown = computed(() => (summary.value?.by_category.expense.l
       @update="handleFilterUpdate"
     />
 
-    <!-- Totals -->
-    <section v-if="summary" class="card p-4">
-      <div class="text-xs label-dim mb-1">
-        {{ formatDate(summary.from) }} → {{ formatDate(summary.to) }} · {{ summary.totals.count }} giao dịch
-      </div>
-      <div
-        class="text-3xl font-bold num mb-2"
-        :class="summary.totals.net >= 0 ? 'income' : 'expense'"
-      >
-        {{ formatSignedVnd(summary.totals.net) }}
-      </div>
-      <div class="grid grid-cols-2 gap-3 text-sm">
-        <div class="flex flex-col">
-          <span class="label-dim">Thu</span>
-          <span class="num income font-semibold">{{ formatVnd(summary.totals.income) }}</span>
-        </div>
-        <div class="flex flex-col">
-          <span class="label-dim">Chi</span>
-          <span class="num expense font-semibold">{{ formatVnd(summary.totals.expense) }}</span>
-        </div>
-      </div>
-    </section>
-
-    <div v-if="loading && !summary" class="card p-6 text-center text-sm text-[var(--color-text-dim)]">
+    <div v-if="loading && !summary" class="py-10 text-center text-sm text-[var(--color-text-dim)]">
       Đang tính toán…
     </div>
 
@@ -115,17 +146,19 @@ const hasExpenseBreakdown = computed(() => (summary.value?.by_category.expense.l
       />
 
       <section>
-        <h3 class="text-sm font-semibold text-[var(--color-text-muted)] mb-2 px-1">
-          Giao dịch · {{ transactions.length }}
-        </h3>
-        <div v-if="transactions.length === 0" class="card p-6 text-center text-sm text-[var(--color-text-dim)]">
+        <div class="flex items-center justify-between mb-3 px-0.5">
+          <h3 class="eyebrow">Giao dịch</h3>
+          <span class="label-dim num">{{ transactions.length }}</span>
+        </div>
+        <div v-if="transactions.length === 0" class="py-10 text-center text-sm text-[var(--color-text-dim)]">
           Không có giao dịch nào trong khoảng đã chọn.
         </div>
-        <div v-else class="card overflow-hidden">
+        <div v-else class="divide-y divide-[var(--color-border)]">
           <TransactionRow
-            v-for="row in transactions"
+            v-for="(row, i) in transactions"
             :key="row.id"
             :row="row"
+            :index="i"
             :show-date="true"
           />
         </div>

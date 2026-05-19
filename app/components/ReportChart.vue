@@ -9,8 +9,8 @@ const props = defineProps<{
 
 const { formatVnd } = useFormat()
 
-const chartHeight = 280
-const padding = { top: 16, right: 8, bottom: 32, left: 8 }
+const chartHeight = 240
+const padding = { top: 12, right: 8, bottom: 30, left: 8 }
 const innerHeight = chartHeight - padding.top - padding.bottom
 
 const maxBar = computed(() => {
@@ -33,7 +33,6 @@ function shortLabel(bucket: string): string {
 }
 
 const barColWidth = 36
-const barColGap = 4
 
 const hoveredBucket = computed(() => {
   if (hovered.value === null) return null
@@ -41,21 +40,27 @@ const hoveredBucket = computed(() => {
 })
 
 const chartWidth = computed(() =>
-  Math.max(props.buckets.length * barColWidth + barColGap, 240),
+  Math.max(props.buckets.length * barColWidth, 240),
 )
 </script>
 
 <template>
-  <div class="card p-4 md:p-5">
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="text-sm font-semibold">Theo {{ groupBy === 'month' ? 'tháng' : 'ngày' }}</h3>
-      <div class="flex items-center gap-3 text-xs">
-        <span class="flex items-center gap-1.5"><span class="w-2 h-2 bg-[var(--color-income)]" /> Thu</span>
-        <span class="flex items-center gap-1.5"><span class="w-2 h-2 bg-[var(--color-expense)]" /> Chi</span>
+  <section>
+    <div class="flex items-center justify-between mb-4 px-0.5">
+      <h3 class="eyebrow">Theo {{ groupBy === 'month' ? 'tháng' : 'ngày' }}</h3>
+      <div class="flex items-center gap-3 text-xs text-[var(--color-text-muted)]">
+        <span class="flex items-center gap-1.5">
+          <span class="dot bg-[var(--color-income)]" />
+          Thu
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="dot bg-[var(--color-expense)]" />
+          Chi
+        </span>
       </div>
     </div>
 
-    <div v-if="buckets.length === 0" class="py-12 text-center text-sm text-[var(--color-text-dim)]">
+    <div v-if="buckets.length === 0" class="py-14 text-center text-sm text-[var(--color-text-dim)]">
       Không có dữ liệu trong khoảng này.
     </div>
 
@@ -66,6 +71,8 @@ const chartWidth = computed(() =>
           :width="chartWidth"
           :height="chartHeight"
           class="block"
+          role="img"
+          aria-label="Biểu đồ thu chi"
         >
           <!-- Baseline -->
           <line
@@ -84,8 +91,9 @@ const chartWidth = computed(() =>
               :width="11"
               :height="barHeight(b.income)"
               fill="var(--color-income)"
-              :opacity="hovered === null || hovered === i ? 0.95 : 0.45"
-              rx="2"
+              :opacity="hovered === null || hovered === i ? 1 : 0.35"
+              rx="3"
+              class="transition-opacity duration-150"
             />
             <rect
               :x="19"
@@ -93,9 +101,11 @@ const chartWidth = computed(() =>
               :width="11"
               :height="barHeight(b.expense)"
               fill="var(--color-expense)"
-              :opacity="hovered === null || hovered === i ? 0.95 : 0.45"
-              rx="2"
+              :opacity="hovered === null || hovered === i ? 1 : 0.35"
+              rx="3"
+              class="transition-opacity duration-150"
             />
+            <!-- Hit area + hover highlight -->
             <rect
               :x="0"
               :y="0"
@@ -106,12 +116,22 @@ const chartWidth = computed(() =>
               @mouseleave="hovered = null"
               @touchstart.passive="hovered = i"
             />
+            <rect
+              v-if="hovered === i"
+              :x="2"
+              :y="padding.top"
+              :width="barColWidth - 4"
+              :height="innerHeight"
+              fill="var(--color-surface-2)"
+              opacity="0.4"
+              rx="4"
+            />
             <text
               :x="barColWidth / 2"
               :y="chartHeight - 10"
               text-anchor="middle"
               fill="var(--color-text-dim)"
-              style="font-size: 10px; font-family: var(--font-sans)"
+              style="font-size: 10px; font-family: var(--font-mono); letter-spacing: -0.02em;"
             >
               {{ shortLabel(b.bucket) }}
             </text>
@@ -119,11 +139,19 @@ const chartWidth = computed(() =>
         </svg>
       </div>
 
-      <div v-if="hoveredBucket" class="mt-2 flex items-center gap-3 text-xs num">
-        <span class="text-[var(--color-text-muted)]">{{ hoveredBucket.bucket }}</span>
-        <span class="income">+{{ formatVnd(hoveredBucket.income) }}</span>
-        <span class="expense">−{{ formatVnd(hoveredBucket.expense) }}</span>
+      <!-- Tooltip-style hover detail -->
+      <div
+        class="mt-3 px-3 py-2.5 surface-2 border border-[var(--color-border)] flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs min-h-[2.75rem] transition-opacity duration-150"
+        :class="hoveredBucket ? 'opacity-100' : 'opacity-50'"
+      >
+        <span class="num text-[var(--color-text-muted)]">
+          {{ hoveredBucket?.bucket ?? '— di chuyển chuột lên cột —' }}
+        </span>
+        <div v-if="hoveredBucket" class="flex items-center gap-4 num">
+          <span class="income">+{{ formatVnd(hoveredBucket.income) }}</span>
+          <span class="expense">−{{ formatVnd(hoveredBucket.expense) }}</span>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>

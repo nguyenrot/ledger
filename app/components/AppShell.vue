@@ -17,12 +17,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="min-h-[100dvh] flex flex-col">
     <TopNav />
     <!-- MobileTopBar handles the iOS status-bar inset on mobile via its own
          padding-top, so main doesn't need additional pt-[safe-inset-top]. -->
     <MobileTopBar />
-    <main class="flex-1 pb-24 md:pb-8">
+    <main class="flex-1 pb-28 md:pb-10">
       <slot />
     </main>
     <BottomTabs />

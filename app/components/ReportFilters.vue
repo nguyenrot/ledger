@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useFormat } from '~/composables/useFormat'
-
 const props = defineProps<{
   from: string
   to: string
@@ -9,8 +7,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   update: [value: { from: string; to: string; groupBy: 'day' | 'month' }]
 }>()
-
-const { todayIso, firstOfMonthIso } = useFormat()
 
 const localFrom = ref(props.from)
 const localTo = ref(props.to)
@@ -31,6 +27,8 @@ const presets: { id: string; label: string }[] = [
   { id: 'last-month', label: 'Tháng trước' },
   { id: 'year', label: 'Năm này' },
 ]
+
+const activePreset = ref<string | null>(null)
 
 function preset(id: string) {
   const now = new Date()
@@ -62,43 +60,52 @@ function preset(id: string) {
   localFrom.value = fmt(from)
   localTo.value = fmt(to)
   localGroupBy.value = id === 'year' || id === 'last-month' ? 'month' : 'day'
+  activePreset.value = id
+  emitNow()
+}
+
+// Any manual date change drops the preset highlight
+function manualChange() {
+  activePreset.value = null
   emitNow()
 }
 </script>
 
 <template>
-  <div class="card p-3 md:p-4 space-y-3">
-    <!-- Date row: stacks on mobile because iOS renders <input type=date> as
-         the full Vietnamese locale ("ngày 16 thg 5, 2026", ~180px). Two of
-         those plus the toggle overflows on iPhone-class widths. -->
-    <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
+  <div class="space-y-3">
+    <!-- Date row + Day/Month toggle -->
+    <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-stretch gap-2">
       <label class="flex items-center gap-2 text-sm sm:flex-1 sm:min-w-[150px]">
-        <span class="label-dim shrink-0 w-7">Từ</span>
+        <span class="label-dim shrink-0 w-7 text-right">Từ</span>
         <input
           v-model="localFrom"
           type="date"
-          class="input !py-1.5 text-sm flex-1 min-w-0"
-          @change="emitNow"
+          class="input num !py-2 text-sm flex-1 min-w-0"
+          @change="manualChange"
         />
       </label>
       <label class="flex items-center gap-2 text-sm sm:flex-1 sm:min-w-[150px]">
-        <span class="label-dim shrink-0 w-7">Đến</span>
+        <span class="label-dim shrink-0 w-7 text-right">Đến</span>
         <input
           v-model="localTo"
           type="date"
-          class="input !py-1.5 text-sm flex-1 min-w-0"
-          @change="emitNow"
+          class="input num !py-2 text-sm flex-1 min-w-0"
+          @change="manualChange"
         />
       </label>
-      <div class="flex bg-[var(--color-surface-2)] p-0.5 rounded-md self-stretch sm:self-auto">
+      <div class="flex bg-[var(--color-surface-2)] p-0.5 rounded-lg border border-[var(--color-border)] self-stretch sm:self-auto">
         <button
-          class="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors"
-          :class="localGroupBy === 'day' ? 'bg-[var(--color-surface-3)] text-[var(--color-text)]' : 'text-[var(--color-text-dim)]'"
+          class="flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-medium rounded-md transition-colors"
+          :class="localGroupBy === 'day'
+            ? 'bg-[var(--color-surface-3)] text-[var(--color-text)]'
+            : 'text-[var(--color-text-dim)] hover:text-[var(--color-text)]'"
           @click="localGroupBy = 'day'; emitNow()"
         >Ngày</button>
         <button
-          class="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors"
-          :class="localGroupBy === 'month' ? 'bg-[var(--color-surface-3)] text-[var(--color-text)]' : 'text-[var(--color-text-dim)]'"
+          class="flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-medium rounded-md transition-colors"
+          :class="localGroupBy === 'month'
+            ? 'bg-[var(--color-surface-3)] text-[var(--color-text)]'
+            : 'text-[var(--color-text-dim)] hover:text-[var(--color-text)]'"
           @click="localGroupBy = 'month'; emitNow()"
         >Tháng</button>
       </div>
@@ -109,7 +116,8 @@ function preset(id: string) {
       <button
         v-for="p in presets"
         :key="p.id"
-        class="chip text-xs !py-1 !px-2.5"
+        class="chip text-xs !py-1.5 !px-3"
+        :class="activePreset === p.id ? 'chip-active' : ''"
         @click="preset(p.id)"
       >
         {{ p.label }}
