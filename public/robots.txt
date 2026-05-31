@@ -1,0 +1,3 @@
+# ledger.kynguyen.cc — private personal finance app. No public content; keep it out of every index.
+User-agent: *
+Disallow: /
