@@ -42,10 +42,12 @@ onBeforeUnmount(() => {
 // Human-friendly "Thứ Năm · 19 tháng 5" — long form on desktop for breathing room
 const todayLabel = computed(() => {
   const d = new Date()
+  // The list below is the backend's "today" (Asia/Ho_Chi_Minh) — label must match.
   return d.toLocaleDateString('vi-VN', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
+    timeZone: 'Asia/Ho_Chi_Minh',
   })
 })
 

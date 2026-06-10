@@ -108,7 +108,9 @@ export const useLedgerApi = () => {
       'Content-Type': 'application/json',
       ...((init.headers as Record<string, string>) || {}),
     }
-    if (token.value) headers['Authorization'] = `Bearer ${token.value}`
+    // An explicit Authorization header (e.g. validating a candidate token at
+    // login, before committing it to state) wins over the stored token.
+    if (!headers['Authorization'] && token.value) headers['Authorization'] = `Bearer ${token.value}`
 
     const res = await fetch(`${baseUrl}${path}`, { ...init, headers })
     if (!res.ok) {
@@ -139,7 +141,13 @@ export const useLedgerApi = () => {
         method: 'POST',
         body: JSON.stringify({ token }),
       }),
-    me: () => apiFetch<AccountInfo>('/api/v1/ledger/me'),
+    /** Pass `explicitToken` to verify a candidate token WITHOUT it being in
+     * state yet (login flow validates first, commits via setToken on success). */
+    me: (explicitToken?: string) =>
+      apiFetch<AccountInfo>(
+        '/api/v1/ledger/me',
+        explicitToken ? { headers: { Authorization: `Bearer ${explicitToken}` } } : {},
+      ),
 
     categories: () => apiFetch<CategoriesResponse>('/api/v1/ledger/categories'),
     createCategory: (body: NewCategory) =>

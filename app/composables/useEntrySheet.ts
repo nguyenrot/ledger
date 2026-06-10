@@ -1,4 +1,5 @@
 import type { LedgerKind, Transaction } from '~/composables/useLedgerApi'
+import { vnDateIso } from '~/composables/useFormat'
 
 interface EntrySheetState {
   open: boolean
@@ -12,10 +13,8 @@ interface EntrySheetState {
   occurredOn: string     // ISO YYYY-MM-DD
 }
 
-const isoToday = (): string => {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+// "Today" must match the backend's timezone (Asia/Ho_Chi_Minh), not the browser's.
+const isoToday = (): string => vnDateIso()
 
 const baseState = (): EntrySheetState => ({
   open: false,
@@ -56,5 +55,10 @@ export const useEntrySheet = () => {
     state.value.open = false
   }
 
-  return { state, openCreate, openEdit, close }
+  /** Back to pristine defaults — used when switching accounts (logout). */
+  function reset() {
+    state.value = baseState()
+  }
+
+  return { state, openCreate, openEdit, close, reset }
 }

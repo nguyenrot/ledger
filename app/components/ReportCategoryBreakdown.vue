@@ -22,6 +22,9 @@ interface Slice {
   pct: number
   color: string
   arc: string
+  /** ~100% slice: arc start/end points coincide and the path collapses to
+   * nothing — render a full ring <circle> instead. */
+  full: boolean
 }
 
 const slices = computed<Slice[]>(() => {
@@ -52,6 +55,7 @@ const slices = computed<Slice[]>(() => {
       pct,
       color: cats.colorFor(props.kind, row.category),
       arc: `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${xi1} ${yi1} Z`,
+      full: pct >= 0.999,
     })
   }
   return result
@@ -76,18 +80,33 @@ const hoveredSlice = computed(() => slices.value.find((s) => s.category === hove
       <!-- Donut with center total -->
       <div class="relative aspect-square">
         <svg viewBox="0 0 100 100" class="w-full h-full">
-          <path
-            v-for="s in slices"
-            :key="s.category"
-            :d="s.arc"
-            :fill="s.color"
-            :opacity="hovered === null || hovered === s.category ? 1 : 0.3"
-            stroke="var(--color-bg)"
-            stroke-width="1.2"
-            class="transition-opacity duration-150 cursor-pointer"
-            @mouseenter="hovered = s.category"
-            @mouseleave="hovered = null"
-          />
+          <template v-for="s in slices" :key="s.category">
+            <!-- ~100% slice: full ring (r=37, width=14 ⇔ outer 44 / inner 30) -->
+            <circle
+              v-if="s.full"
+              cx="50"
+              cy="50"
+              r="37"
+              fill="none"
+              :stroke="s.color"
+              stroke-width="14"
+              :opacity="hovered === null || hovered === s.category ? 1 : 0.3"
+              class="transition-opacity duration-150 cursor-pointer"
+              @mouseenter="hovered = s.category"
+              @mouseleave="hovered = null"
+            />
+            <path
+              v-else
+              :d="s.arc"
+              :fill="s.color"
+              :opacity="hovered === null || hovered === s.category ? 1 : 0.3"
+              stroke="var(--color-bg)"
+              stroke-width="1.2"
+              class="transition-opacity duration-150 cursor-pointer"
+              @mouseenter="hovered = s.category"
+              @mouseleave="hovered = null"
+            />
+          </template>
         </svg>
         <!-- Center label — total or hovered amount -->
         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">

@@ -54,10 +54,12 @@ async function handleLogin() {
   busy.value = true
   error.value = ''
   try {
+    // Validate FIRST with the candidate token passed explicitly — committing it
+    // via setToken before validation would swap app.vue to the main app and
+    // remount a fresh TokenGate on 401, so the user would never see the error.
+    await api.me(input.value)
     setToken(input.value)
-    await api.me()
   } catch (e) {
-    setToken(null)
     if (e instanceof ApiError && e.status === 401) {
       error.value = 'Token không tồn tại. Anh nhập lại hoặc chuyển sang "Tạo account".'
     } else {
@@ -196,7 +198,7 @@ async function handleLogin() {
               autocomplete="off"
               autocapitalize="off"
               :maxlength="TOKEN_LENGTH"
-              class="input num text-lg tracking-[0.18em] uppercase"
+              class="input num text-lg tracking-[0.18em]"
               placeholder="NguyenA123"
             />
             <!-- Slot preview — visual confirmation of progress -->
@@ -255,7 +257,7 @@ async function handleLogin() {
               autocomplete="off"
               autocapitalize="off"
               :maxlength="TOKEN_LENGTH"
-              class="input num text-lg tracking-[0.18em] uppercase"
+              class="input num text-lg tracking-[0.18em]"
               placeholder="Token đã có"
             />
             <div class="mt-3 grid grid-cols-10 gap-1">

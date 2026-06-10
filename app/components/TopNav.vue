@@ -3,10 +3,12 @@ import { useToken } from '~/composables/useToken'
 import { useEntrySheet } from '~/composables/useEntrySheet'
 import { useCategoryManager } from '~/composables/useCategoryManager'
 import { useConfirm } from '~/composables/useConfirm'
+import { useAccountState } from '~/composables/useAccountState'
 import ThemeSwitcher from '~/components/ThemeSwitcher.vue'
 
 const route = useRoute()
 const { token, clearToken } = useToken()
+const { resetAccountState } = useAccountState()
 const sheet = useEntrySheet()
 const categoryManager = useCategoryManager()
 const confirm = useConfirm()
@@ -31,7 +33,10 @@ async function handleSignOut() {
     cancelText: 'Giữ lại',
     danger: true,
   })
-  if (ok) clearToken()
+  if (ok) {
+    clearToken()
+    resetAccountState()
+  }
 }
 
 onMounted(() => {

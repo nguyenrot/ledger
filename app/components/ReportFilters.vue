@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { vnDateIso } from '~/composables/useFormat'
+
 const props = defineProps<{
   from: string
   to: string
@@ -31,32 +33,34 @@ const presets: { id: string; label: string }[] = [
 const activePreset = ref<string | null>(null)
 
 function preset(id: string) {
-  const now = new Date()
+  // Anchor every preset on "today" in Asia/Ho_Chi_Minh (the backend's tz),
+  // then do calendar math in UTC so day/month overflow normalizes correctly.
+  const [y, m, d] = vnDateIso().split('-').map(Number) as [number, number, number]
+  const utc = (yy: number, mm: number, dd: number) => new Date(Date.UTC(yy, mm, dd))
+  const fmt = (dt: Date) => dt.toISOString().slice(0, 10)
+  const today = utc(y, m - 1, d)
   let from: Date
-  let to: Date = now
+  let to: Date = today
   switch (id) {
     case 'today':
-      from = new Date(now)
+      from = today
       break
     case 'week':
-      from = new Date(now)
-      from.setDate(from.getDate() - 6)
+      from = utc(y, m - 1, d - 6)
       break
     case 'month':
-      from = new Date(now.getFullYear(), now.getMonth(), 1)
+      from = utc(y, m - 1, 1)
       break
     case 'last-month':
-      from = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      to = new Date(now.getFullYear(), now.getMonth(), 0)
+      from = utc(y, m - 2, 1)
+      to = utc(y, m - 1, 0)
       break
     case 'year':
-      from = new Date(now.getFullYear(), 0, 1)
+      from = utc(y, 0, 1)
       break
     default:
-      from = now
+      from = today
   }
-  const fmt = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   localFrom.value = fmt(from)
   localTo.value = fmt(to)
   localGroupBy.value = id === 'year' || id === 'last-month' ? 'month' : 'day'

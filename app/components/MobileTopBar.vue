@@ -2,9 +2,11 @@
 import { useToken } from '~/composables/useToken'
 import { useCategoryManager } from '~/composables/useCategoryManager'
 import { useConfirm } from '~/composables/useConfirm'
+import { useAccountState } from '~/composables/useAccountState'
 import ThemeSwitcher from '~/components/ThemeSwitcher.vue'
 
 const { token, clearToken } = useToken()
+const { resetAccountState } = useAccountState()
 const categoryManager = useCategoryManager()
 const confirm = useConfirm()
 
@@ -39,7 +41,10 @@ async function handleSignOut() {
     cancelText: 'Giữ lại',
     danger: true,
   })
-  if (ok) clearToken()
+  if (ok) {
+    clearToken()
+    resetAccountState()
+  }
 }
 
 onMounted(() => document.addEventListener('click', close))

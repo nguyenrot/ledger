@@ -1,5 +1,11 @@
 const VND_FORMATTER = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 })
 
+/** Backend "today" lives in Asia/Ho_Chi_Minh — every default date / preset
+ * must be keyed in that timezone, NOT the browser's. 'en-CA' yields YYYY-MM-DD. */
+export const VN_TIMEZONE = 'Asia/Ho_Chi_Minh'
+export const vnDateIso = (d: Date = new Date()): string =>
+  d.toLocaleDateString('en-CA', { timeZone: VN_TIMEZONE })
+
 export const useFormat = () => {
   const formatVnd = (amount: number): string => `${VND_FORMATTER.format(amount)}₫`
 
@@ -38,22 +44,12 @@ export const useFormat = () => {
     }
   }
 
-  /** YYYY-MM-DD for the user's local "today" (browser timezone). */
-  const todayIso = (): string => {
-    const d = new Date()
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-  }
+  /** YYYY-MM-DD for "today" in Asia/Ho_Chi_Minh (matches the backend). */
+  const todayIso = (): string => vnDateIso()
 
-  /** First-of-month ISO. */
-  const firstOfMonthIso = (ref?: Date): string => {
-    const d = ref ?? new Date()
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    return `${y}-${m}-01`
-  }
+  /** First-of-month ISO, in Asia/Ho_Chi_Minh. */
+  const firstOfMonthIso = (ref?: Date): string =>
+    `${vnDateIso(ref).slice(0, 7)}-01`
 
   return {
     formatVnd,
