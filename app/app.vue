@@ -15,6 +15,7 @@ onMounted(() => {
 
 <template>
   <div>
+    <WorldCupBanner />
     <template v-if="token">
       <AppShell>
         <NuxtPage />
